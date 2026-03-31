@@ -18,4 +18,4 @@ persona-aware rewrite recommendations for underperforming steps.
 ## Branches
 - \`skeleton\` — architecture and logic, no data loaded
 - \`demo\` — fully seeded with synthetic data, all tools wired, dashboard live
-"@ | Out-File -FilePath README.md -Encoding utf8
+"@ | Out-File -FilePath README.md -Encoding utf8`

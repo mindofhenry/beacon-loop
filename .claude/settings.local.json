@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pipeline/.venv/Scripts/python.exe pipeline/generators/outreach_generator.py)",
+      "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/generators/outreach_generator.py)",
+      "Bash(python pipeline/generators/outreach_generator.py)",
+      "Bash(python -X utf8 pipeline/generators/outreach_generator.py)",
+      "Bash(python pipeline/generators/run_generators.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python pipeline/generators/run_generators.py)",
+      "Bash(python -c \":*)",
+      "Bash(pipeline/.venv/Scripts/python.exe -c \"from faker import Faker; print\\(''ok''\\)\")",
+      "Bash(pipeline/.venv/Scripts/python.exe pipeline/generators/run_generators.py)",
+      "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/generators/run_generators.py)",
+      "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/generators/generate_salesforce.py)",
+      "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe validate_salesforce.py)",
+      "Bash(echo \"Exit: $?\")"
+    ]
+  }
+}
