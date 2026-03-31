@@ -1,4 +1,3 @@
-@"
 # Beacon Loop
 
 Step-level sequence attribution engine. Outreach doesn't do it. This does.
