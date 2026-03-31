@@ -12,7 +12,7 @@ import csv
 import os
 import sys
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -366,6 +366,7 @@ def calculate_step_performance(
 
 def write_touchpoints(sb: Client, touchpoints_df: pd.DataFrame) -> int:
     """Batch-insert step_touchpoints rows. Returns count written."""
+    touchpoints_df = touchpoints_df.astype(object).where(touchpoints_df.notna(), other=None)
     records = []
     for _, row in touchpoints_df.iterrows():
         records.append({
@@ -430,7 +431,7 @@ def start_run(sb: Client, run_id: str, source_files: list[str] | None) -> None:
 def complete_run(sb: Client, run_id: str, tp_count: int, snap_count: int) -> None:
     sb.table("pipeline_runs").update({
         "status": "completed",
-        "completed_at": datetime.utcnow().isoformat(),
+        "completed_at": datetime.now(timezone.utc).isoformat(),
         "touchpoints_written": tp_count,
         "snapshots_written": snap_count,
     }).eq("id", run_id).execute()
@@ -439,7 +440,7 @@ def complete_run(sb: Client, run_id: str, tp_count: int, snap_count: int) -> Non
 def fail_run(sb: Client, run_id: str, error: str) -> None:
     sb.table("pipeline_runs").update({
         "status": "failed",
-        "completed_at": datetime.utcnow().isoformat(),
+        "completed_at": datetime.now(timezone.utc).isoformat(),
         "error_message": error[:2000],
     }).eq("id", run_id).execute()
 

@@ -13,7 +13,12 @@
       "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/generators/run_generators.py)",
       "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/generators/generate_salesforce.py)",
       "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe validate_salesforce.py)",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Bash(\"/c/Users/hhmar/AppData/Local/Programs/Python/Python312/python.exe\" -m venv .venv)",
+      "Bash(.venv/Scripts/pip.exe install:*)",
+      "Bash(.venv/Scripts/python.exe -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(source .venv/Scripts/activate)",
+      "Bash(python attribution_model.py)"
     ]
   }
 }
