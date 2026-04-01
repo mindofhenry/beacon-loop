@@ -2,7 +2,7 @@
 mcp_server/server.py
 Beacon Loop MCP server — FastMCP with SSE transport.
 
-Exposes five tools for querying attribution data and generating
+Exposes six tools for querying attribution data and generating
 Claude-powered rewrite suggestions for underperforming sequence steps.
 """
 
@@ -60,7 +60,8 @@ def get_sequence_health() -> list[dict[str, Any]]:
 
     Each row contains: source, sequence_id, sequence_name,
     avg_health_score, flagged_step_count, total_send_volume,
-    avg_reply_rate, avg_meeting_rate, step_count.
+    avg_reply_rate, avg_meeting_rate, step_count, step_intents.
+    Uses health_score_v2 (pipeline-computed Bayesian score).
     """
     conn = _db()
     try:
@@ -74,13 +75,14 @@ def get_sequence_health() -> list[dict[str, Any]]:
             SELECT
                 source,
                 sequence_id,
-                MAX(sequence_name)                    AS sequence_name,
-                COUNT(*)                              AS step_count,
-                SUM(send_volume)                      AS total_send_volume,
-                ROUND(AVG(health_score)::numeric, 4)  AS avg_health_score,
-                ROUND(AVG(reply_rate)::numeric, 4)    AS avg_reply_rate,
-                ROUND(AVG(meeting_rate)::numeric, 4)  AS avg_meeting_rate,
-                SUM(CASE WHEN flagged THEN 1 ELSE 0 END) AS flagged_step_count
+                MAX(sequence_name)                         AS sequence_name,
+                COUNT(*)                                   AS step_count,
+                SUM(send_volume)                           AS total_send_volume,
+                ROUND(AVG(health_score_v2)::numeric, 4)    AS avg_health_score,
+                ROUND(AVG(reply_rate)::numeric, 4)         AS avg_reply_rate,
+                ROUND(AVG(meeting_rate)::numeric, 4)       AS avg_meeting_rate,
+                SUM(CASE WHEN flag_type != 'none' THEN 1 ELSE 0 END) AS flagged_step_count,
+                ARRAY_AGG(DISTINCT step_intent)            AS step_intents
             FROM step_performance
             WHERE snapshot_date = %s
             GROUP BY source, sequence_id
@@ -89,11 +91,13 @@ def get_sequence_health() -> list[dict[str, Any]]:
             (latest,),
         )
         rows = [dict(r) for r in cur.fetchall()]
-        # psycopg2 returns Decimal for ROUND results — convert to float
         for r in rows:
             for k in ("avg_health_score", "avg_reply_rate", "avg_meeting_rate"):
                 if r[k] is not None:
                     r[k] = float(r[k])
+            # Convert psycopg2 list to plain list
+            if r.get("step_intents"):
+                r["step_intents"] = list(r["step_intents"])
         return rows
     finally:
         conn.close()
@@ -109,7 +113,8 @@ def get_step_breakdown(sequence_id: str, step_id: str | None = None) -> list[dic
     Return step-level performance detail for a sequence from the latest run.
 
     Pass step_id to narrow to a single step. Results are ordered by step_number.
-    Each row includes all rate columns, health_score, flagged, and flag_reasons.
+    Each row includes rate columns, health_score_v2, flag_type, flag_confidence,
+    step_intent, position_expected_rate, bayesian_reply_rate, and flag_reasons.
     """
     conn = _db()
     try:
@@ -118,13 +123,17 @@ def get_step_breakdown(sequence_id: str, step_id: str | None = None) -> list[dic
         if not latest:
             return []
 
+        columns = """source, sequence_id, sequence_name, step_id, step_number,
+                     step_type, send_volume, open_rate, click_rate, reply_rate,
+                     meeting_rate, opp_created_rate, closed_won_rate,
+                     pipeline_value, health_score_v2, flag_type, flag_confidence,
+                     step_intent, position_expected_rate, bayesian_reply_rate,
+                     flag_reasons"""
+
         if step_id:
             cur.execute(
-                """
-                SELECT source, sequence_id, sequence_name, step_id, step_number,
-                       step_type, send_volume, open_rate, click_rate, reply_rate,
-                       meeting_rate, opp_created_rate, closed_won_rate,
-                       pipeline_value, health_score, flagged, flag_reasons
+                f"""
+                SELECT {columns}
                 FROM step_performance
                 WHERE snapshot_date = %s
                   AND sequence_id = %s
@@ -135,11 +144,8 @@ def get_step_breakdown(sequence_id: str, step_id: str | None = None) -> list[dic
             )
         else:
             cur.execute(
-                """
-                SELECT source, sequence_id, sequence_name, step_id, step_number,
-                       step_type, send_volume, open_rate, click_rate, reply_rate,
-                       meeting_rate, opp_created_rate, closed_won_rate,
-                       pipeline_value, health_score, flagged, flag_reasons
+                f"""
+                SELECT {columns}
                 FROM step_performance
                 WHERE snapshot_date = %s
                   AND sequence_id = %s
@@ -150,8 +156,9 @@ def get_step_breakdown(sequence_id: str, step_id: str | None = None) -> list[dic
         rows = [dict(r) for r in cur.fetchall()]
         for r in rows:
             for k in ("open_rate", "click_rate", "reply_rate", "meeting_rate",
-                      "opp_created_rate", "closed_won_rate", "health_score"):
-                if r[k] is not None:
+                      "opp_created_rate", "closed_won_rate", "health_score_v2",
+                      "flag_confidence", "position_expected_rate", "bayesian_reply_rate"):
+                if r.get(k) is not None:
                     r[k] = float(r[k])
             if r.get("pipeline_value") is not None:
                 r["pipeline_value"] = float(r["pipeline_value"])
@@ -170,10 +177,10 @@ def get_underperforming_steps(
     limit: int = 20,
 ) -> list[dict[str, Any]]:
     """
-    Return flagged steps from the latest run, worst health score first.
+    Return flagged steps from the latest run, sorted by flag_confidence descending.
 
-    Only includes steps where send_volume >= min_send_volume to filter out
-    steps with too little data to draw conclusions. Returns up to `limit` rows.
+    Only includes steps where flag_type != 'none' and send_volume >= min_send_volume.
+    Returns up to `limit` rows with step_intent and send_volume_tier.
     """
     conn = _db()
     try:
@@ -185,21 +192,22 @@ def get_underperforming_steps(
         cur.execute(
             """
             SELECT source, sequence_id, sequence_name, step_id, step_number,
-                   step_type, send_volume, reply_rate, meeting_rate,
-                   health_score, flag_reasons
+                   step_type, step_intent, send_volume, send_volume_tier,
+                   reply_rate, meeting_rate, health_score_v2,
+                   flag_type, flag_confidence, flag_reasons
             FROM step_performance
             WHERE snapshot_date = %s
-              AND flagged = TRUE
+              AND flag_type != 'none'
               AND send_volume >= %s
-            ORDER BY health_score ASC
+            ORDER BY flag_confidence DESC
             LIMIT %s
             """,
             (latest, min_send_volume, limit),
         )
         rows = [dict(r) for r in cur.fetchall()]
         for r in rows:
-            for k in ("reply_rate", "meeting_rate", "health_score"):
-                if r[k] is not None:
+            for k in ("reply_rate", "meeting_rate", "health_score_v2", "flag_confidence"):
+                if r.get(k) is not None:
                     r[k] = float(r[k])
         return rows
     finally:
@@ -230,12 +238,14 @@ def get_rewrite_suggestion(
         if not latest:
             return {"error": "No pipeline data found"}
 
-        # Fetch step metrics
+        # Fetch step metrics — include new v1.2 columns for richer LLM context
         cur.execute(
             """
             SELECT source, sequence_id, sequence_name, step_id, step_number,
                    step_type, send_volume, open_rate, reply_rate, meeting_rate,
-                   health_score, flag_reasons, pipeline_run_id
+                   health_score_v2, flag_type, flag_confidence,
+                   step_intent, position_expected_rate, bayesian_reply_rate,
+                   flag_reasons, pipeline_run_id
             FROM step_performance
             WHERE snapshot_date = %s AND step_id = %s
             LIMIT 1
@@ -260,66 +270,17 @@ def get_rewrite_suggestion(
             return {"error": "No persona_configs found — run the migration first"}
         persona = dict(persona)
 
-        # Build prompt
-        pain_points_str = ", ".join(persona.get("pain_points") or [])
-        flag_reasons_str = (
-            "\n  - ".join(step["flag_reasons"])
-            if step.get("flag_reasons")
-            else "health score below threshold"
-        )
+        # Build prompt and call Claude via prompts/rewrite.py
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from prompts.rewrite import generate_rewrite
 
-        prompt = f"""You are an expert B2B sales email copywriter analyzing an underperforming outbound sequence step.
-
-## Step Metrics
-- Source: {step["source"]}
-- Sequence: {step["sequence_name"]} (ID: {step["sequence_id"]})
-- Step: #{step["step_number"]} ({step["step_type"]})
-- Send volume: {step["send_volume"]}
-- Open rate: {float(step["open_rate"]):.1%}
-- Reply rate: {float(step["reply_rate"]):.1%}
-- Meeting rate: {float(step["meeting_rate"]):.1%}
-- Health score: {float(step["health_score"]):.3f} / 1.000
-
-## Why It's Flagged
-  - {flag_reasons_str}
-
-## Target Persona
-- Title: {persona.get("title", "unknown")}
-- Industry: {persona.get("industry", "unknown")}
-- Company size: {persona.get("company_size", "unknown")}
-- Pain points: {pain_points_str}
-- Tone: {persona.get("tone", "professional")}
-{f'- Additional context: {persona["extra_context"]}' if persona.get("extra_context") else ""}
-
-## Your Task
-Respond with a JSON object containing exactly these three keys:
-1. "diagnosis": 2-3 sentences explaining why this step is underperforming based on the metrics and persona fit.
-2. "suggested_subject": A single revised subject line optimized for this persona.
-3. "suggested_body": A revised email body (plain text, 3-5 sentences, no placeholders except {{{{first_name}}}} and {{{{company}}}}).
-
-Respond with raw JSON only — no markdown fences."""
-
-        # Call Claude
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = message.content[0].text.strip()
-
-        # Parse JSON response
-        try:
-            parsed = json.loads(raw)
-        except json.JSONDecodeError:
-            # Attempt to extract JSON block if model wrapped it anyway
-            import re
-            match = re.search(r"\{.*\}", raw, re.DOTALL)
-            parsed = json.loads(match.group()) if match else {"raw_response": raw}
-
-        diagnosis = parsed.get("diagnosis", "")
-        suggested_subject = parsed.get("suggested_subject", "")
-        suggested_body = parsed.get("suggested_body", "")
+        result = generate_rewrite(step, persona, ANTHROPIC_API_KEY)
+        diagnosis = result["diagnosis"]
+        suggested_subject = result["suggested_subject"]
+        suggested_body = result["suggested_body"]
+        confidence = result["confidence"]
+        explanation = result["explanation"]
 
         # Persist to rewrite_suggestions
         cur.execute(
@@ -327,8 +288,8 @@ Respond with raw JSON only — no markdown fences."""
             INSERT INTO rewrite_suggestions
                 (step_id, sequence_id, sequence_name, step_number,
                  persona_config_id, diagnosis, suggested_subject, suggested_body,
-                 model_used, pipeline_run_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 confidence, explanation, model_used, pipeline_run_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -340,6 +301,8 @@ Respond with raw JSON only — no markdown fences."""
                 diagnosis,
                 suggested_subject,
                 suggested_body,
+                confidence,
+                explanation,
                 "claude-sonnet-4-6",
                 step["pipeline_run_id"],
             ),
@@ -356,6 +319,8 @@ Respond with raw JSON only — no markdown fences."""
             "diagnosis": diagnosis,
             "suggested_subject": suggested_subject,
             "suggested_body": suggested_body,
+            "confidence": confidence,
+            "explanation": explanation,
         }
     finally:
         conn.close()
@@ -375,6 +340,7 @@ def compare_sequences(
 
     Returns {"sequence_a": [...], "sequence_b": [...]} where each list contains
     step rows ordered by step_number with key performance metrics.
+    Uses health_score_v2 for comparison.
     """
     conn = _db()
     try:
@@ -387,8 +353,9 @@ def compare_sequences(
         for key, seq_id in [("sequence_a", sequence_id_a), ("sequence_b", sequence_id_b)]:
             cur.execute(
                 """
-                SELECT step_id, step_number, step_type, send_volume,
-                       reply_rate, meeting_rate, health_score, flagged,
+                SELECT step_id, step_number, step_type, step_intent,
+                       send_volume, reply_rate, meeting_rate,
+                       health_score_v2, flag_type, flag_confidence,
                        sequence_name, source
                 FROM step_performance
                 WHERE snapshot_date = %s AND sequence_id = %s
@@ -398,8 +365,8 @@ def compare_sequences(
             )
             rows = [dict(r) for r in cur.fetchall()]
             for r in rows:
-                for k in ("reply_rate", "meeting_rate", "health_score"):
-                    if r[k] is not None:
+                for k in ("reply_rate", "meeting_rate", "health_score_v2", "flag_confidence"):
+                    if r.get(k) is not None:
                         r[k] = float(r[k])
             result[key] = rows
 
@@ -409,8 +376,46 @@ def compare_sequences(
 
 
 # ---------------------------------------------------------------------------
+# Tool: get_step_copy
+# ---------------------------------------------------------------------------
+
+@mcp.tool()
+def get_step_copy(step_id: str) -> dict[str, Any]:
+    """
+    Return the subject line and body for a sequence step by step_id.
+
+    Looks up the sequence_steps table and returns subject, body_text,
+    and source (outreach or salesloft). Returns an error key if the
+    step_id is not found.
+    """
+    conn = _db()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT step_id, source, subject, body_text
+            FROM sequence_steps
+            WHERE step_id = %s
+            LIMIT 1
+            """,
+            (step_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return {"error": f"No step found with step_id={step_id!r}"}
+        return dict(row)
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    mcp.run(transport="sse", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    if os.environ.get("PORT"):
+        # Railway: PORT is always injected — use SSE
+        mcp.run(transport="sse", host="0.0.0.0", port=int(os.environ.get("PORT")))
+    else:
+        # Claude Desktop: spawns via stdio, no PORT set
+        mcp.run(transport="stdio")
