@@ -34,7 +34,7 @@ rng = random.Random() # unseeded — controls per-step engagement rates so they 
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "data" / "synthetic"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-NUM_CADENCES = 5
+NUM_CADENCES = 12
 STEPS_PER_CADENCE_RANGE = (5, 7)
 PROSPECTS_PER_STEP = len(CONTACT_POOL)  # 100 — one slot per pool contact
 
@@ -61,11 +61,56 @@ REPS = [
 TOP_PERFORMER_REP_ID = 3
 
 CADENCE_CONFIGS = [
-    {"name": "ENT-CISO-Q2 Outbound",         "cadence_function": "outbound", "tags": ["ciso", "enterprise", "q2"]},
-    {"name": "VP Eng — DevSec Cold",          "cadence_function": "outbound", "tags": ["vp-eng", "devsec", "cold"]},
-    {"name": "IT Director — Compliance Push", "cadence_function": "outbound", "tags": ["it-director", "compliance"]},
-    {"name": "CTO — Post-Funding",            "cadence_function": "outbound", "tags": ["cto", "post-funding"]},
-    {"name": "Security Eng — Inbound FU",     "cadence_function": "inbound",  "tags": ["security-eng", "inbound"]},
+    # ── Existing 5 (IDs 2001–2005) — do not modify ────────────────────────────────────────
+    {"name": "ENT-CISO-Q2 Outbound",         "cadence_function": "outbound", "tags": ["ciso", "enterprise", "q2"],    "tier": "green"},
+    {"name": "VP Eng — DevSec Cold",          "cadence_function": "outbound", "tags": ["vp-eng", "devsec", "cold"],    "tier": "yellow"},
+    {"name": "IT Director — Compliance Push", "cadence_function": "outbound", "tags": ["it-director", "compliance"],   "tier": "red"},
+    {"name": "CTO — Post-Funding",            "cadence_function": "outbound", "tags": ["cto", "post-funding"],         "tier": "green"},
+    {"name": "Security Eng — Inbound FU",     "cadence_function": "inbound",  "tags": ["security-eng", "inbound"],     "tier": "yellow"},
+    # ── New 7 (IDs 2006–2012) ─────────────────────────────────────────────────────────────
+    {"name": "IT Director — Zero Trust Rollout",
+     "cadence_function": "outbound", "tags": ["it-director", "zero-trust", "cloud"],
+     "description": "Outbound to IT Directors leading zero-trust initiatives with value-add research content.",
+     "tier": "green",
+     "num_steps": 5,
+     "value_add_step": 3},
+    {"name": "VP Sales — Enterprise Pipeline Push",
+     "cadence_function": "outbound", "tags": ["vp-sales", "enterprise", "pipeline"],
+     "description": "High-volume outbound to VP Sales at enterprise accounts. Research-backed value-add approach.",
+     "tier": "yellow",
+     "num_steps": 6,
+     "prospect_count": 400,   # HIGH VOLUME: 100 POOL + 300 synthetic
+     "value_add_step": 3},
+    {"name": "CFO — Compliance Automation ROI",
+     "cadence_function": "outbound", "tags": ["cfo", "compliance", "roi"],
+     "description": "Red-tier CFO sequence. Breakup step deliberately underperforms the 2.0x intent multiplier.",
+     "tier": "red",
+     "num_steps": 5,
+     "prospect_count": 300},  # needs sv~156 at step 5 so rc=0 produces p_below > 0.80
+    {"name": "VP Marketing — Demand Gen Audit",
+     "cadence_function": "outbound", "tags": ["vp-marketing", "demand-gen", "audit"],
+     "description": "Short sequence for VP Marketing focused on demand gen pipeline efficiency.",
+     "tier": "yellow",
+     "num_steps": 4},
+    {"name": "IT Director — Security Stack Consolidation",
+     "cadence_function": "outbound", "tags": ["it-director", "consolidation", "multi-channel"],
+     "description": "Multi-channel 7-step sequence. Step 3 email references LinkedIn + voicemail touchpoints.",
+     "tier": "yellow",
+     "num_steps": 7,
+     "multichannel_step": 3},
+    {"name": "CISO — Cyber Insurance Readiness",
+     "cadence_function": "outbound", "tags": ["ciso", "cyber-insurance", "risk"],
+     "description": "CISO sequence for cyber insurance readiness. Social proof step with customer results.",
+     "tier": "green",
+     "num_steps": 5,
+     "social_proof_step": 3},
+    {"name": "VP Sales — Competitive Win-Back",
+     "cadence_function": "outbound", "tags": ["vp-sales", "competitive", "win-back"],
+     "description": "High-volume VP Sales win-back. Decent reply rates, zero meeting conversion (tests health gate).",
+     "tier": "yellow",   # yellow rates → decent replies; synthetic-only pool → zero meetings → pipeline forces red
+     "num_steps": 6,
+     "prospect_count": 350,
+     "synthetic_only": True},
 ]
 
 TOPICS      = ["security", "compliance", "identity", "cloud infrastructure", "developer tooling"]
@@ -89,6 +134,51 @@ EMAIL_TEMPLATES = [
 ]
 
 
+# Intent-specific templates — identical to Outreach equivalents for consistent classification
+VALUE_ADD_TEMPLATE = {
+    "subject": "Q3 {topic} data — worth 5 minutes?",
+    "body": "Hi {{first_name}},\n\nJust published our {topic} research report — data from 200+ companies on {pain_point}. The insights for {persona}s at companies your size are specific and actionable.\n\nWant me to send the report over?\n\n{rep_name}",
+}
+SOCIAL_PROOF_TEMPLATE = {
+    "subject": "How {similar_company} tackled {pain_point}",
+    "body": "Hi {{first_name}},\n\nA customer similar to {company_name} — same stage, same {pain_point} challenge — reduced their exposure by 60% in 90 days. Happy to share the case study and customer results.\n\n15 minutes this week?\n\n{rep_name}",
+}
+MULTICHANNEL_EMAIL_TEMPLATE = {
+    "subject": "Also sent you a LinkedIn message, {{first_name}}",
+    "body": "Hi {{first_name}},\n\nI left you a voicemail earlier and sent a LinkedIn connection request too — wanted to make sure this didn't fall through the cracks.\n\n{pain_point} keeps coming up with {persona}s right now. Is it on your radar?\n\n{rep_name}",
+}
+
+_EXTRA_FIRST_NAMES = ["Alex", "Jordan", "Morgan", "Taylor", "Casey", "Riley", "Jamie",
+                       "Quinn", "Avery", "Blake", "Drew", "Emery", "Finley", "Harley",
+                       "Kendall", "Logan", "Parker", "Reese", "Sage", "Skyler"]
+_EXTRA_LAST_NAMES  = ["Chen", "Kim", "Patel", "Nguyen", "Rodriguez", "Williams", "Johnson",
+                       "Smith", "Brown", "Davis", "Wilson", "Anderson", "Thomas", "Jackson",
+                       "Martinez", "Garcia", "Lee", "Harris", "Clark", "Lewis"]
+_EXTRA_COMPANIES   = ["Apex Corp", "Summit Group", "Vertex Inc", "Pinnacle Solutions",
+                       "Meridian Tech", "Horizon Systems", "Zenith Group", "Atlas Corp",
+                       "Crestview Inc", "Northgate Solutions", "Ridgemont Group", "Oakfield Corp",
+                       "Starfield Inc", "Ironwood Group", "BlueSky Systems", "RedRock Corp"]
+_EXTRA_TITLES      = ["VP of Sales", "VP of Marketing", "CFO", "CIO", "Director of Revenue",
+                       "Head of Finance", "VP of Revenue Operations", "Chief Financial Officer",
+                       "VP of Growth", "Director of Marketing", "VP of Finance"]
+
+
+def generate_extra_prospects(start_id: int, count: int, tag: str) -> list:
+    """Synthetic prospects not in CONTACT_POOL — no Salesforce match, no attributed meetings."""
+    local_rng = random.Random(start_id)
+    return [
+        {
+            "id": start_id + i,
+            "first_name": local_rng.choice(_EXTRA_FIRST_NAMES),
+            "last_name":  local_rng.choice(_EXTRA_LAST_NAMES),
+            "email":      f"{local_rng.choice(_EXTRA_FIRST_NAMES).lower()}.{local_rng.choice(_EXTRA_LAST_NAMES).lower()}.{tag}.{i:04d}@synth.mock",
+            "title":      local_rng.choice(_EXTRA_TITLES),
+            "company":    local_rng.choice(_EXTRA_COMPANIES),
+        }
+        for i in range(count)
+    ]
+
+
 def iso_dt(dt):
     return dt.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -108,22 +198,26 @@ def render(template, rep_name):
         rep_name=rep_name,
     )
 
-def get_step_rates(step_number, is_underperformer, is_top_performer_step):
+def get_step_rates(step_number, is_underperformer, is_top_performer_step, tier="yellow"):
     if is_underperformer:
+        # Hard floor ~1.1% per-send regardless of tier
         return {"open_rate": round(rng.uniform(0.28, 0.38), 4),
                 "click_rate": round(rng.uniform(0.005, 0.015), 4),
-                # 2–3.8% of opens → ~0.6–1.1% of sends (target ~1.1%)
                 "reply_rate": round(rng.uniform(0.020, 0.038), 4)}
     decay = max(0.6, 1.0 - (step_number - 1) * 0.06)
     open_r  = rng.uniform(0.20, 0.42) * decay
-    # 11–16% of opens × ~28% open rate × decay ≈ 3–4% per-sends for normal steps
-    # top-performer steps (~13% of sends) contribute ~8–12% each; combined avg ≈ 4%
-    reply_r = rng.uniform(0.110, 0.160) * decay
     click_r = rng.uniform(0.010, 0.035) * decay
-    if is_top_performer_step:
-        # 2–2.5× multiplier on reply → up to ~8–12% per-sends
-        # with only ~13% of sends as top-performer steps, overall stays ≤4.5%
+    # Tier-specific reply rates (% of opens):
+    #   green:  15–22% of opens × ~31% avg open ≈ 5–7% per-send
+    #   yellow: 11–16% of opens × ~31% avg open ≈ 3.4–5% per-send
+    #   red:    3–6% of opens × ~31% avg open ≈ 0.9–1.9% per-send
+    if tier == "green":
+        reply_r = rng.uniform(0.15, 0.22) * decay
+    elif tier == "red":
+        reply_r = rng.uniform(0.030, 0.060) * decay
+    else:  # yellow (default)
         reply_r = rng.uniform(0.110, 0.160) * decay
+    if is_top_performer_step:
         mult = rng.uniform(2.0, 2.5)
         reply_r = min(reply_r * mult, 0.50)
         click_r = min(click_r * 1.5, 0.08)
@@ -137,10 +231,18 @@ def generate_cadences():
         cad_id = 2001 + i
         created = random_past_dt(365, 60)
         updated = created + timedelta(days=random.randint(1, 30))
-        num_steps = random.randint(*STEPS_PER_CADENCE_RANGE)
+        # Existing configs: random step count (preserves random state).
+        # New configs: fixed num_steps to avoid consuming global random state for them.
+        num_steps = cfg.get("num_steps") or random.randint(*STEPS_PER_CADENCE_RANGE)
         owner = random.choice(REPS)
         cadences.append({
             "id": cad_id,
+            "_tier": cfg["tier"],
+            "_prospect_count":    cfg.get("prospect_count", len(POOL_PROSPECTS)),
+            "_synthetic_only":    cfg.get("synthetic_only", False),
+            "_value_add_step":    cfg.get("value_add_step"),
+            "_social_proof_step": cfg.get("social_proof_step"),
+            "_multichannel_step": cfg.get("multichannel_step"),
             "name": cfg["name"],
             "cadence_function": cfg["cadence_function"],
             "current_state": "active",
@@ -170,14 +272,21 @@ def generate_steps(cadences):
     steps, step_id = [], 6000
     for cad in cadences:
         cad_id = cad["id"]
+        tier   = cad.get("_tier", "yellow")
         num_steps = cad["_num_steps"]
         created_base = datetime.fromisoformat(cad["created_at"].replace("Z", "+00:00"))
         for order in range(1, num_steps + 1):
             step_id += 1
-            if order == 1 or order == num_steps:
+            # Force intent-override steps to Email so templates are applied.
+            _intent_step = (cad.get("_value_add_step") == order or
+                            cad.get("_social_proof_step") == order or
+                            cad.get("_multichannel_step") == order)
+            if order == 1 or order == num_steps or _intent_step:
                 stype = "Email"
             elif cad_id == 2002 and order == 3:
                 stype = "Email"  # must be Email — deliberate underperformer step
+            elif cad_id == 2010 and order == 3:
+                stype = "Email"  # must be Email — multi-channel reference step (voicemail/LinkedIn)
             else:
                 stype = random.choices(["Email", "Phone"], weights=[0.70, 0.30])[0]
             # Guarantee top performer (rep_id 3) owns step 1 of cadences 2001 and 2004
@@ -189,7 +298,18 @@ def generate_steps(cadences):
             is_email = (stype == "Email")
             type_settings = None
             if is_email:
-                tmpl = EMAIL_TEMPLATES[min(order - 1, len(EMAIL_TEMPLATES) - 1)]
+                # Route to intent-specific template if this cadence has an override for this step.
+                va_step = cad.get("_value_add_step")
+                sp_step = cad.get("_social_proof_step")
+                mc_step = cad.get("_multichannel_step")
+                if va_step and order == va_step:
+                    tmpl = VALUE_ADD_TEMPLATE
+                elif sp_step and order == sp_step:
+                    tmpl = SOCIAL_PROOF_TEMPLATE
+                elif mc_step and order == mc_step:
+                    tmpl = MULTICHANNEL_EMAIL_TEMPLATE
+                else:
+                    tmpl = EMAIL_TEMPLATES[min(order - 1, len(EMAIL_TEMPLATES) - 1)]
                 subject = render(tmpl["subject"], rep["name"])
                 body    = render(tmpl["body"],    rep["name"])
                 type_settings = {"email_template": {"subject": subject, "body": body}}
@@ -207,6 +327,7 @@ def generate_steps(cadences):
                 "type_settings": type_settings,
                 "_rep_id": rep["id"],
                 "_rep_name": rep["name"],
+                "_tier": tier,
             })
     return steps
 
@@ -222,7 +343,17 @@ def generate_email_activity(cadences, steps):
 
     for cad in cadences:
         cad_id = cad["id"]
-        prospects = list(POOL_PROSPECTS)
+        prospect_count = cad.get("_prospect_count", len(POOL_PROSPECTS))
+        synthetic_only = cad.get("_synthetic_only", False)
+        tag = f"sl{cad_id}"
+        extra_start_id = 60000 + (cad_id - 2001) * 500
+        if synthetic_only:
+            prospects = generate_extra_prospects(extra_start_id, prospect_count, tag)
+        elif prospect_count > len(POOL_PROSPECTS):
+            extra = generate_extra_prospects(extra_start_id, prospect_count - len(POOL_PROSPECTS), tag)
+            prospects = list(POOL_PROSPECTS) + extra
+        else:
+            prospects = list(POOL_PROSPECTS)
         cad_created = datetime.fromisoformat(cad["created_at"].replace("Z", "+00:00"))
 
         agg = {"emails_sent": 0, "calls_logged": 0, "replies": 0, "bounces": 0}
@@ -238,11 +369,14 @@ def generate_email_activity(cadences, steps):
 
             step_id  = step["id"]
             rep_id   = step["_rep_id"]
-            is_under = (cad_id == 2002 and step_num == 3)
+            tier     = step.get("_tier", "yellow")
+            # 2002 step 3: existing deliberate underperformer
+            # 2008 step 5: breakup step underperformer (tests 2× intent multiplier)
+            is_under = (cad_id == 2002 and step_num == 3) or (cad_id == 2008 and step_num == 5)
             # Restrict boost to early (high-volume) steps only — same constraint as
             # outreach_generator to avoid distorting aggregate averages above target.
             is_top   = (rep_id == TOP_PERFORMER_REP_ID and step_num <= 2)
-            rates    = get_step_rates(step_num, is_under, is_top)
+            rates    = get_step_rates(step_num, is_under, is_top, tier=tier)
 
             active = random.sample(prospects, active_count)
             n      = len(active)
@@ -256,6 +390,10 @@ def generate_email_activity(cadences, steps):
             # clicks and replies can overlap — cap at opens
             n_click   = min(n_click, n_open)
             n_reply   = min(n_reply, n_open)
+            # Breakup underperformer: force 0 replies so P(rate < 2× threshold) > 0.80
+            # With sv~156 and rc=0, posterior mean ~0.97% << threshold 1.79%.
+            if cad_id == 2008 and step_num == 5:
+                n_reply = 0
 
             # Assign outcomes to prospect slots
             # clicked and replied must be drawn from opened (so opens > 0)
@@ -329,7 +467,7 @@ def generate_email_activity(cadences, steps):
                 })
 
         # Roll cadence-level aggregates up from activity records
-        cad["counts"]["people_added"]    = PROSPECTS_PER_STEP
+        cad["counts"]["people_added"]    = len(prospects)
         cad["counts"]["emails_sent"]     = agg["emails_sent"]
         cad["counts"]["calls_logged"]    = agg["calls_logged"]
         cad["counts"]["replies"]         = agg["replies"]
@@ -375,6 +513,22 @@ def print_summary(cadences, steps, activities):
     total_replies = sum(s["replies"] for s in stats.values())
     print(f"\nOverall open rate:  {total_opens/total_sends:.1%}  (PRD target ~27%)")
     print(f"Overall reply rate: {total_replies/total_sends:.1%}  (PRD target ~4%)")
+
+    # Per-cadence reply rate summary for tier verification
+    cad_stats = defaultdict(lambda: {"sends": 0, "replies": 0, "name": "", "tier": ""})
+    for act in activities:
+        cid = act["cadence"]["id"]
+        cad_stats[cid]["sends"]   += 1
+        cad_stats[cid]["replies"] += act["replies"]
+    for cad in cadences:
+        cad_stats[cad["id"]]["name"] = cad["name"]
+        cad_stats[cad["id"]]["tier"] = cad.get("_tier", "?")
+    print(f"\n{'CadID':>6} {'Tier':>6} {'Sends':>6} {'RepR':>7}  Name")
+    print("-" * 70)
+    for cid in sorted(cad_stats):
+        cs = cad_stats[cid]
+        rep_r = cs["replies"] / cs["sends"] if cs["sends"] else 0
+        print(f"{cid:>6} {cs['tier']:>6} {cs['sends']:>6} {rep_r:>6.1%}  {cs['name']}")
 
 
 def main():

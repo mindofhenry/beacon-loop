@@ -9,6 +9,7 @@ metrics and health scores, and writes results to Supabase.
 
 import json
 import csv
+import math
 import os
 import sys
 import uuid
@@ -17,6 +18,7 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
+from scipy import stats as sp_stats
 from supabase import create_client, Client
 
 # ---------------------------------------------------------------------------
@@ -40,10 +42,27 @@ DEFAULTS = {
     "threshold_health_score": 0.40,
 }
 
-# Health-score normalization ceilings (top-decile industry benchmarks).
-REPLY_CEILING = 0.08
-MEETING_CEILING = 0.04
-OPP_CEILING = 0.02
+# v1 health-score normalization ceilings (backward compatibility).
+REPLY_CEILING = 0.06
+MEETING_CEILING = 0.35
+OPP_CEILING = 2.50
+
+# v2 Bayesian priors: (alpha0, beta0)
+BAYESIAN_PRIORS = {
+    "reply": (2, 48),       # ~4% prior
+    "meeting": (1, 99),     # ~1% prior
+    "opp": (0.5, 99.5),     # ~0.5% prior
+}
+
+# v2 health-score normalization ceilings
+V2_REPLY_CEILING = 0.08
+V2_MEETING_CEILING = 0.04
+V2_OPP_CEILING = 0.02
+
+# Position decay factor per step
+POSITION_DECAY = 0.65
+DEFAULT_R1 = 0.06
+R1_FLOOR = 0.05  # Minimum R1 to prevent threshold collapse in low-performing sequences
 
 
 def get_supabase() -> Client:
@@ -73,6 +92,12 @@ def load_config(sb: Client) -> dict:
     except Exception:
         pass
     return dict(DEFAULTS)
+
+
+def load_intent_thresholds(sb: Client) -> dict[str, float | None]:
+    """Load intent_type -> threshold_multiplier from intent_thresholds table."""
+    resp = sb.table("intent_thresholds").select("intent_type, threshold_multiplier").execute()
+    return {row["intent_type"]: row["threshold_multiplier"] for row in resp.data}
 
 
 # ---------------------------------------------------------------------------
@@ -181,6 +206,47 @@ def load_source_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Dat
     return activity_df, sf_contacts_df, sf_opps_df, sf_ocr_df, meeting_contact_ids
 
 
+def load_step_content() -> tuple[dict[str, dict], dict[tuple[str, str], int]]:
+    """Load step subject/body from synthetic files for intent classification.
+
+    Returns:
+        step_content: dict mapping step_id (str) -> {subject, body_text}
+        seq_max_steps: dict mapping (source, sequence_id) -> max_step_number
+    """
+    step_content: dict[str, dict] = {}
+    seq_max: dict[tuple[str, str], int] = {}
+
+    # Outreach
+    for s in _load_json("sequence_steps.json"):
+        attrs = s.get("attributes", {})
+        rels = s.get("relationships", {})
+        seq_id = str(rels.get("sequence", {}).get("data", {}).get("id", ""))
+        step_id = str(s["id"])
+        step_num = attrs.get("order", 0)
+        step_content[step_id] = {
+            "subject": attrs.get("subject"),
+            "body_text": attrs.get("bodyText"),
+        }
+        key = ("outreach", seq_id)
+        seq_max[key] = max(seq_max.get(key, 0), step_num)
+
+    # Salesloft
+    for s in _load_json("sl_steps.json"):
+        ts = s.get("type_settings") or {}
+        email_tpl = ts.get("email_template") or {}
+        step_id = str(s["id"])
+        cad_id = str(s["cadence_id"])
+        step_num = s.get("step_number", 0)
+        step_content[step_id] = {
+            "subject": email_tpl.get("subject"),
+            "body_text": email_tpl.get("body"),
+        }
+        key = ("salesloft", cad_id)
+        seq_max[key] = max(seq_max.get(key, 0), step_num)
+
+    return step_content, seq_max
+
+
 # ---------------------------------------------------------------------------
 # 3. Attribution join chain
 # ---------------------------------------------------------------------------
@@ -193,9 +259,6 @@ def resolve_opportunity(
     """
     Given a Salesforce ContactId, find the first matched Opportunity via
     OpportunityContactRole. Returns dict with opp fields or None.
-
-    This function signature is the expansion point for multi-touch attribution:
-    change calling logic to allow multiple matches instead of first-match only.
     """
     ocr_matches = sf_ocr_df.loc[sf_ocr_df["ContactId"] == contact_id]
     if ocr_matches.empty:
@@ -264,6 +327,76 @@ def run_join_chain(
 
 
 # ---------------------------------------------------------------------------
+# 3b. Scoring helpers
+# ---------------------------------------------------------------------------
+
+def classify_step_intent(
+    step_number: int,
+    max_step: int,
+    step_type: str,
+    subject: str | None,
+    body_text: str | None,
+) -> str:
+    """Rule-based step intent classification.
+
+    Priority: breakup > multi_channel > social_proof > follow_up > value_add > cold_opener
+    """
+    # Last step in sequence → breakup
+    if step_number == max_step:
+        return "breakup"
+
+    # Call or LinkedIn → multi_channel
+    if step_type in ("call", "phone", "linkedin", "other"):
+        return "multi_channel"
+
+    combined = ((subject or "") + " " + (body_text or "")).lower()
+
+    # Email that references a multi-channel touchpoint (voicemail follow-up or LinkedIn message)
+    if any(kw in combined for kw in ("linkedin", "voicemail")):
+        return "multi_channel"
+
+    # Social proof keywords
+    if any(kw in combined for kw in ("case study", "customer", "results", "testimonial")):
+        return "social_proof"
+
+    # Follow-up keywords
+    if any(kw in combined for kw in ("quick bump", "circling back", "following up", "just checking")):
+        return "follow_up"
+
+    # Value-add keywords
+    if any(kw in combined for kw in ("insight", "data", "report", "research", "resource")):
+        return "value_add"
+
+    # Step 1 or anything unmatched
+    return "cold_opener"
+
+
+def bayesian_posterior_mean(successes: float, trials: int, alpha0: float, beta0: float) -> float:
+    """Beta-Binomial posterior mean."""
+    return (alpha0 + successes) / (alpha0 + beta0 + trials)
+
+
+def beta_cdf_below(threshold: float, alpha: float, beta: float) -> float:
+    """P(true_rate < threshold) using Beta distribution CDF."""
+    if threshold <= 0:
+        return 0.0
+    if threshold >= 1:
+        return 1.0
+    return float(sp_stats.beta.cdf(threshold, alpha, beta))
+
+
+def wilson_score_interval(successes: int, trials: int, z: float = 1.96) -> tuple[float, float]:
+    """Wilson score confidence interval. Returns (lower, upper)."""
+    if trials == 0:
+        return (0.0, 0.0)
+    p_hat = successes / trials
+    denom = 1 + z ** 2 / trials
+    center = (p_hat + z ** 2 / (2 * trials)) / denom
+    margin = z * math.sqrt((p_hat * (1 - p_hat) + z ** 2 / (4 * trials)) / trials) / denom
+    return (max(0.0, center - margin), min(1.0, center + margin))
+
+
+# ---------------------------------------------------------------------------
 # 4 & 5. Metric calculation, health score, flagging
 # ---------------------------------------------------------------------------
 
@@ -271,14 +404,35 @@ def calculate_step_performance(
     touchpoints_df: pd.DataFrame,
     config: dict,
     pipeline_run_id: str,
+    intent_thresholds: dict[str, float | None],
+    step_content: dict[str, dict],
+    seq_max_steps: dict[tuple[str, str], int],
 ) -> pd.DataFrame:
-    """Group touchpoints by step and calculate performance metrics."""
+    """Group touchpoints by step and calculate performance metrics.
+
+    Computes v1 health_score + flagged (backward compat) and v2 Bayesian
+    metrics: position-adjusted baselines, intent classification, Bayesian
+    shrinkage, gated geometric mean health_score_v2, volume-tiered flagging.
+    """
 
     group_cols = ["source", "sequence_id", "sequence_name", "step_id", "step_number", "step_type"]
+
+    # --- Pre-compute R1 (step-1 reply rate) per sequence ---
+    r1_by_seq: dict[tuple, float] = {}
+    for keys, grp in touchpoints_df.groupby(group_cols, dropna=False):
+        source, seq_id, _, _, step_num, _ = keys
+        if int(step_num) == 1:
+            sv = len(grp)
+            rc = int(grp["replied"].sum())
+            r1_by_seq[(source, seq_id)] = rc / sv if sv > 0 else DEFAULT_R1
+
     snapshots = []
 
     for keys, grp in touchpoints_df.groupby(group_cols, dropna=False):
         source, seq_id, seq_name, step_id, step_num, step_type = keys
+        step_num = int(step_num)
+
+        # ---- Basic counts (unchanged) ----
         sv = len(grp)
         oc = int(grp["opened"].sum())
         cc = int(grp["clicked"].sum())
@@ -295,20 +449,17 @@ def calculate_step_performance(
         opp_created_rate = occ / sv if sv > 0 else 0.0
         closed_won_rate = cwc / sv if sv > 0 else 0.0
 
-        # Health score
-        raw_score = (
-            reply_rate * config["weight_reply_rate"]
-            + meeting_rate * config["weight_meeting_rate"]
-            + opp_created_rate * config["weight_opp_rate"]
+        # ---- v1 health score (backward compatibility) ----
+        reply_norm_v1 = min(reply_rate / REPLY_CEILING, 1.0) if REPLY_CEILING > 0 else 0.0
+        meeting_norm_v1 = min(meeting_rate / MEETING_CEILING, 1.0) if MEETING_CEILING > 0 else 0.0
+        opp_norm_v1 = min(opp_created_rate / OPP_CEILING, 1.0) if OPP_CEILING > 0 else 0.0
+        health_score_v1 = (
+            reply_norm_v1 * config["weight_reply_rate"]
+            + meeting_norm_v1 * config["weight_meeting_rate"]
+            + opp_norm_v1 * config["weight_opp_rate"]
         )
-        theoretical_max = (
-            REPLY_CEILING * config["weight_reply_rate"]
-            + MEETING_CEILING * config["weight_meeting_rate"]
-            + OPP_CEILING * config["weight_opp_rate"]
-        )
-        health_score = min(raw_score / theoretical_max, 1.0) if theoretical_max > 0 else 0.0
 
-        # Flagging
+        # v1 flagging
         flag_reasons = []
         if reply_rate < config["threshold_reply_rate"]:
             flag_reasons.append(
@@ -318,20 +469,89 @@ def calculate_step_performance(
             flag_reasons.append(
                 f"Meeting rate {meeting_rate:.1%} below threshold {config['threshold_meeting_rate']:.1%}"
             )
-        if health_score < config["threshold_health_score"]:
+        if health_score_v1 < config["threshold_health_score"]:
             flag_reasons.append(
-                f"Health score {health_score:.3f} below threshold {config['threshold_health_score']:.3f}"
+                f"Health score {health_score_v1:.3f} below threshold {config['threshold_health_score']:.3f}"
             )
-        flagged = len(flag_reasons) > 0
+        flagged_v1 = len(flag_reasons) > 0
+
+        # ---- 3a: Position-adjusted baseline ----
+        r1_observed = r1_by_seq.get((source, seq_id), DEFAULT_R1)
+        r1 = max(r1_observed, R1_FLOOR)
+        position_expected_rate = r1 * (POSITION_DECAY ** (step_num - 1))
+
+        # ---- 3b: Step intent classification ----
+        meta = step_content.get(str(step_id), {})
+        max_step = seq_max_steps.get((source, str(seq_id)), step_num)
+        step_intent = classify_step_intent(
+            step_num, max_step, step_type,
+            meta.get("subject"), meta.get("body_text"),
+        )
+        itm = intent_thresholds.get(step_intent)
+
+        # ---- 3c: Bayesian shrinkage ----
+        a_r, b_r = BAYESIAN_PRIORS["reply"]
+        a_m, b_m = BAYESIAN_PRIORS["meeting"]
+        a_o, b_o = BAYESIAN_PRIORS["opp"]
+        bay_reply = bayesian_posterior_mean(rc, sv, a_r, b_r)
+        bay_meeting = bayesian_posterior_mean(mc, sv, a_m, b_m)
+        bay_opp = bayesian_posterior_mean(occ, sv, a_o, b_o)
+
+        # ---- 3d: Gated geometric mean health score ----
+        reply_norm_v2 = min(bay_reply / V2_REPLY_CEILING, 1.0)
+        meeting_norm_v2 = min(bay_meeting / V2_MEETING_CEILING, 1.0)
+        opp_norm_v2 = min(bay_opp / V2_OPP_CEILING, 1.0)
+        health_score_v2 = (
+            (reply_norm_v2 + 0.01) ** 0.50
+            * (meeting_norm_v2 + 0.01) ** 0.30
+            * (opp_norm_v2 + 0.01) ** 0.20
+        )
+        health_gate = bay_reply < 0.01 or bay_meeting < 0.003
+
+        # ---- 3e: Volume-tiered flagging (unified Bayesian) ----
+        if sv < 50:
+            vol_tier = "low"
+        elif sv <= 200:
+            vol_tier = "medium"
+        else:
+            vol_tier = "high"
+
+        flag_type = "none"
+        flag_confidence = None
+        ci_upper = None
+        ci_lower = None
+
+        if itm is not None:  # skip multi_channel (NULL multiplier)
+            adjusted_threshold = position_expected_rate * itm
+
+            # Bayesian posterior for reply rate
+            alpha_post = a_r + rc
+            beta_post = b_r + sv - rc
+
+            # Unified: Bayesian P(true_rate < threshold) for ALL tiers
+            p_below = beta_cdf_below(adjusted_threshold, alpha_post, beta_post)
+            flag_confidence = round(p_below, 4)
+
+            if health_gate or p_below > 0.80:
+                flag_type = "bayesian_flag"
+
+            # Wilson CIs — informational, computed for all tiers
+            lower, upper = wilson_score_interval(rc, sv)
+            ci_lower = round(lower, 6)
+            ci_upper = round(upper, 6)
+
+        # Pre-generate UUID so attribution_credit can reference it
+        snapshot_id = str(uuid.uuid4())
 
         snapshots.append({
+            "id": snapshot_id,
             "pipeline_run_id": pipeline_run_id,
             "snapshot_date": str(date.today()),
             "source": source,
             "sequence_id": str(seq_id),
             "sequence_name": seq_name,
             "step_id": str(step_id),
-            "step_number": int(step_num),
+            "step_number": step_num,
             "step_type": step_type,
             "send_volume": sv,
             "open_count": oc,
@@ -347,17 +567,152 @@ def calculate_step_performance(
             "pipeline_value": round(pv, 2),
             "closed_won_count": cwc,
             "closed_won_rate": round(closed_won_rate, 4),
-            "health_score": round(health_score, 4),
-            "flagged": flagged,
+            # v1 backward compat
+            "health_score": round(health_score_v1, 4),
+            "flagged": flagged_v1,
             "flag_reasons": flag_reasons if flag_reasons else None,
             "weight_config_snapshot": {
                 "weight_reply_rate": config["weight_reply_rate"],
                 "weight_meeting_rate": config["weight_meeting_rate"],
                 "weight_opp_rate": config["weight_opp_rate"],
             },
+            # v2 new columns
+            "position_expected_rate": round(position_expected_rate, 6),
+            "step_intent": step_intent,
+            "intent_threshold_multiplier": itm,
+            "bayesian_reply_rate": round(bay_reply, 6),
+            "bayesian_meeting_rate": round(bay_meeting, 6),
+            "bayesian_opp_rate": round(bay_opp, 6),
+            "health_score_v2": round(health_score_v2, 6),
+            "health_gate_override": health_gate,
+            "send_volume_tier": vol_tier,
+            "flag_type": flag_type,
+            "flag_confidence": flag_confidence,
+            "credible_interval_upper": ci_upper,
+            "credible_interval_lower": ci_lower,
         })
 
     return pd.DataFrame(snapshots)
+
+
+# ---------------------------------------------------------------------------
+# 5b. U-shaped + last-touch attribution credit
+# ---------------------------------------------------------------------------
+
+def compute_attribution_credit(
+    touchpoints_df: pd.DataFrame,
+    snapshots_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Compute U-shaped and last-touch attribution credit per step-opportunity pair.
+
+    U-shaped: 40% first step, 40% last engaged step, 20% split among middle engaged.
+    Last-touch: 100% to last engaged step.
+
+    Groups by (opportunity_id, source, sequence_id) so step_numbers are meaningful.
+    """
+
+    # Lookup: (source, sequence_id, step_id) -> step_performance UUID
+    snap_id_lookup: dict[tuple, str] = {}
+    for _, row in snapshots_df.iterrows():
+        snap_id_lookup[(row["source"], row["sequence_id"], row["step_id"])] = row["id"]
+
+    opp_tp = touchpoints_df[touchpoints_df["opportunity_id"].notna()].copy()
+    credits: list[dict] = []
+
+    for (opp_id, source, seq_id), grp in opp_tp.groupby(
+        ["opportunity_id", "source", "sequence_id"], dropna=False
+    ):
+        entries = []
+        for _, tp in grp.iterrows():
+            snap_uuid = snap_id_lookup.get((tp["source"], tp["sequence_id"], tp["step_id"]))
+            if not snap_uuid:
+                continue
+            eng = 0
+            if tp["replied"]:
+                eng = 3
+            elif tp["clicked"]:
+                eng = 2
+            elif tp["opened"]:
+                eng = 1
+            entries.append({
+                "snap_uuid": snap_uuid,
+                "step_number": int(tp["step_number"]),
+                "engagement": eng,
+            })
+
+        if not entries:
+            continue
+
+        # Deduplicate: per snap_uuid, keep max engagement
+        best: dict[str, dict] = {}
+        for e in entries:
+            uid = e["snap_uuid"]
+            if uid not in best or e["engagement"] > best[uid]["engagement"]:
+                best[uid] = e
+        entries = sorted(best.values(), key=lambda x: x["step_number"])
+
+        engaged = [e for e in entries if e["engagement"] > 0]
+
+        # --- Last-touch: 100% to last engaged step (or last step if none) ---
+        lt_step = engaged[-1] if engaged else entries[-1]
+        credits.append({
+            "step_id": lt_step["snap_uuid"],
+            "opportunity_id": str(opp_id),
+            "model_type": "last_touch",
+            "credit_fraction": 1.0,
+        })
+
+        # --- U-shaped ---
+        first_step = entries[0]  # lowest step_number
+
+        if not engaged:
+            credits.append({
+                "step_id": first_step["snap_uuid"],
+                "opportunity_id": str(opp_id),
+                "model_type": "u_shaped",
+                "credit_fraction": 1.0,
+            })
+            continue
+
+        last_engaged = max(engaged, key=lambda x: (x["step_number"], x["engagement"]))
+        first_uuid = first_step["snap_uuid"]
+        last_uuid = last_engaged["snap_uuid"]
+
+        if first_uuid == last_uuid:
+            credits.append({
+                "step_id": first_uuid,
+                "opportunity_id": str(opp_id),
+                "model_type": "u_shaped",
+                "credit_fraction": 1.0,
+            })
+        else:
+            credit_map: dict[str, float] = {}
+            credit_map[first_uuid] = credit_map.get(first_uuid, 0) + 0.40
+            credit_map[last_uuid] = credit_map.get(last_uuid, 0) + 0.40
+
+            middle = [
+                e for e in engaged
+                if e["snap_uuid"] != first_uuid and e["snap_uuid"] != last_uuid
+            ]
+            if middle:
+                per_middle = 0.20 / len(middle)
+                for m in middle:
+                    credit_map[m["snap_uuid"]] = credit_map.get(m["snap_uuid"], 0) + per_middle
+            else:
+                credit_map[first_uuid] += 0.10
+                credit_map[last_uuid] += 0.10
+
+            for snap_uuid, frac in credit_map.items():
+                credits.append({
+                    "step_id": snap_uuid,
+                    "opportunity_id": str(opp_id),
+                    "model_type": "u_shaped",
+                    "credit_fraction": round(frac, 4),
+                })
+
+    if not credits:
+        return pd.DataFrame(columns=["step_id", "opportunity_id", "model_type", "credit_fraction"])
+    return pd.DataFrame(credits)
 
 
 # ---------------------------------------------------------------------------
@@ -401,16 +756,44 @@ def write_touchpoints(sb: Client, touchpoints_df: pd.DataFrame) -> int:
 def write_snapshots(sb: Client, snapshots_df: pd.DataFrame) -> int:
     """Batch-insert step_performance rows. Returns count written."""
     records = snapshots_df.to_dict(orient="records")
-    # Ensure JSON-serializable types
     for r in records:
         r["step_number"] = int(r["step_number"])
         r["flagged"] = bool(r["flagged"])
+        # Ensure boolean/None types for new columns
+        if r.get("health_gate_override") is not None:
+            r["health_gate_override"] = bool(r["health_gate_override"])
+        # Convert numpy/pandas NaN to None for JSON serialization
+        for col in (
+            "position_expected_rate", "intent_threshold_multiplier",
+            "bayesian_reply_rate", "bayesian_meeting_rate", "bayesian_opp_rate",
+            "health_score_v2", "flag_confidence",
+            "credible_interval_upper", "credible_interval_lower",
+        ):
+            if col in r and r[col] is not None:
+                val = r[col]
+                if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                    r[col] = None
 
     BATCH = 500
     written = 0
     for i in range(0, len(records), BATCH):
         chunk = records[i : i + BATCH]
         sb.table("step_performance").insert(chunk).execute()
+        written += len(chunk)
+    return written
+
+
+def write_attribution_credit(sb: Client, credit_df: pd.DataFrame) -> int:
+    """Batch-insert step_attribution_credit rows. Returns count written."""
+    if credit_df.empty:
+        return 0
+    records = credit_df.to_dict(orient="records")
+
+    BATCH = 500
+    written = 0
+    for i in range(0, len(records), BATCH):
+        chunk = records[i : i + BATCH]
+        sb.table("step_attribution_credit").insert(chunk).execute()
         written += len(chunk)
     return written
 
@@ -475,19 +858,24 @@ def main() -> None:
     start_run(sb, run_id, source_files)
 
     try:
-        # Step 1: Load config
+        # Step 1: Load config + intent thresholds
         config = load_config(sb)
         print(f"[attribution_model] Config loaded: {config}")
+
+        intent_thresholds = load_intent_thresholds(sb)
+        print(f"[attribution_model] Intent thresholds loaded: {len(intent_thresholds)} types")
 
         # Step 2: Load data
         if DEMO_MODE:
             print("[attribution_model] Loading from synthetic CSVs/JSON...")
             activity_df, sf_contacts_df, sf_opps_df, sf_ocr_df, meeting_cids = load_source_data()
+            step_content, seq_max_steps = load_step_content()
         else:
             raise NotImplementedError("Live Supabase data loading not yet implemented")
 
         print(f"[attribution_model] Activity rows: {len(activity_df)}")
         print(f"[attribution_model] SF contacts: {len(sf_contacts_df)}, opps: {len(sf_opps_df)}, OCRs: {len(sf_ocr_df)}")
+        print(f"[attribution_model] Step content loaded for {len(step_content)} steps across {len(seq_max_steps)} sequences")
 
         # Step 3: Join chain
         print("[attribution_model] Running attribution join chain...")
@@ -497,12 +885,17 @@ def main() -> None:
         print(f"[attribution_model] Touchpoints enriched: {len(touchpoints_df)}")
 
         # Steps 4 & 5: Metrics + health score + flagging
-        print("[attribution_model] Calculating step performance...")
-        snapshots_df = calculate_step_performance(touchpoints_df, config, run_id)
+        print("[attribution_model] Calculating step performance (v2 Bayesian)...")
+        snapshots_df = calculate_step_performance(
+            touchpoints_df, config, run_id,
+            intent_thresholds, step_content, seq_max_steps,
+        )
         print(f"[attribution_model] Snapshots calculated: {len(snapshots_df)}")
 
         flagged_count = int(snapshots_df["flagged"].sum())
-        print(f"[attribution_model] Flagged steps: {flagged_count}")
+        v2_flagged = int((snapshots_df["flag_type"] != "none").sum())
+        print(f"[attribution_model] v1 flagged steps: {flagged_count}")
+        print(f"[attribution_model] v2 flagged steps: {v2_flagged}")
 
         # Step 6: Write to Supabase
         print("[attribution_model] Writing touchpoints to Supabase...")
@@ -513,7 +906,15 @@ def main() -> None:
         snap_written = write_snapshots(sb, snapshots_df)
         print(f"[attribution_model] Snapshots written: {snap_written}")
 
-        # Step 7: Complete run
+        # Step 7: Attribution credit
+        print("[attribution_model] Computing attribution credit (U-shaped + last-touch)...")
+        credit_df = compute_attribution_credit(touchpoints_df, snapshots_df)
+        print(f"[attribution_model] Attribution credit rows: {len(credit_df)}")
+
+        credit_written = write_attribution_credit(sb, credit_df)
+        print(f"[attribution_model] Attribution credit written: {credit_written}")
+
+        # Step 8: Complete run
         complete_run(sb, run_id, tp_written, snap_written)
         print(f"[attribution_model] Pipeline run {run_id} completed successfully.")
 

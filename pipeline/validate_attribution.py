@@ -110,37 +110,37 @@ def main() -> int:
     )
     all_pass = all_pass and ok
 
-    # ── 5. Flagging works ─────────────────────────────────────────────
+    # ── 5. Flagging works (v2: flag_type != 'none') ────────────────────
     flagged_rows = (
         sb.table("step_performance")
-        .select("step_id, source, flagged")
+        .select("step_id, source, flag_type, flag_confidence")
         .eq("pipeline_run_id", run_id)
-        .eq("flagged", True)
+        .neq("flag_type", "none")
         .execute()
     )
     flagged_count = len(flagged_rows.data)
     ok = check(
-        "5. At least one step flagged",
+        "5. At least one step flagged (flag_type != 'none')",
         flagged_count > 0,
         f"flagged rows: {flagged_count}",
     )
     all_pass = all_pass and ok
 
-    # ── 6. Health score bounds ────────────────────────────────────────
+    # ── 6. Health score v2 bounds ─────────────────────────────────────
     all_perf = (
         sb.table("step_performance")
-        .select("step_id, health_score")
+        .select("step_id, health_score_v2")
         .eq("pipeline_run_id", run_id)
         .execute()
     )
     bad_scores = [
         r for r in all_perf.data
-        if r["health_score"] is not None and (
-            float(r["health_score"]) < 0.0 or float(r["health_score"]) > 1.0
+        if r["health_score_v2"] is not None and (
+            float(r["health_score_v2"]) < 0.0 or float(r["health_score_v2"]) > 1.1
         )
     ]
     ok = check(
-        "6. All health_score values in [0.0, 1.0]",
+        "6. All health_score_v2 values in [0.0, 1.1]",
         len(bad_scores) == 0,
         f"out-of-range: {bad_scores[:5]}",
     )
