@@ -22,3 +22,7 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+task_plan.md
+findings.md
+progress.md
+dashboard/.env.local
