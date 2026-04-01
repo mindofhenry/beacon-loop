@@ -42,7 +42,7 @@ pipeline/
   loaders/         # Supabase loaders
   attribution_model.py
   main.py
-dashboard/         # Next.js frontend (not yet scaffolded)
+dashboard/         # Next.js frontend (scaffolded — 4 views live)
 .claude/skills/    # Read the relevant skill before touching that domain
 ```
 
@@ -53,6 +53,22 @@ dashboard/         # Next.js frontend (not yet scaffolded)
 3. **Check the migration files** in `db/migrations/` before writing any SQL
 4. **Never write code directly in the planning interface** — all implementation
    happens here in Claude Code
+
+## planning-with-files — Required Protocol
+
+Maintain three files in the repo root at all times during multi-step work:
+
+- `findings.md` — what you discovered when reading existing code, files, schemas, or data. Write before touching anything.
+- `progress.md` — step-by-step status: Not Started / In Progress / Done / Blocked. Update after every step.
+- `task_plan.md` — full task list with step numbers and current status. Update after every step.
+
+### Rules
+1. Initialize all three files before writing any code. No exceptions.
+2. Update all three after each step — not at the end of the session.
+3. If blocked, record the blocker in progress.md immediately and stop.
+4. Final update to all three files at session end.
+
+These files are gitignored. They are your working memory. Skipping them is not allowed.
 
 ## Skills Reference — When to Read Each
 
@@ -71,6 +87,11 @@ dashboard/         # Next.js frontend (not yet scaffolded)
 
 All active development happens on `skeleton` until the data layer is complete,
 then merges to `demo` when fully seeded.
+
+**`demo` is the deployed branch on Railway.** The MCP server runs at:
+`https://beacon-loop-production.up.railway.app/sse`
+
+If the Railway CLI loses the service link, re-run: `railway service beacon-loop`
 
 ## Hard Rules — Things CC Gets Wrong
 
@@ -99,11 +120,11 @@ then merges to `demo` when fully seeded.
 ### MCP Server
 
 - **Transport is SSE, not stdio.** FastMCP is configured with
-  `transport="sse", host="0.0.0.0", port=8000`. Do not change this — it is
-  required for Railway deployment.
-- **All five tools must remain callable** at all times:
+  `transport="sse", host="0.0.0.0", port=int(os.environ.get("PORT", 8000))`.
+  Do not hardcode the port — Railway injects `PORT` at runtime.
+- **All six tools must remain callable** at all times:
   `get_sequence_health`, `get_step_breakdown`, `get_underperforming_steps`,
-  `get_rewrite_suggestion`, `compare_sequences`.
+  `get_rewrite_suggestion`, `compare_sequences`, `get_step_copy`.
 - **LLM model is `claude-sonnet-4-6`.** Do not substitute another model.
 
 ### Pipeline
@@ -146,6 +167,7 @@ Required in `.env` (never read or output this file):
 - `DEMO_MODE` — Set to `true` for synthetic data mode
 - `SF_CLIENT_ID`, `SF_CLIENT_SECRET`, `SF_USERNAME`, `SF_PASSWORD`,
   `SF_SECURITY_TOKEN`, `SF_INSTANCE_URL` — Salesforce OAuth credentials
+- `PORT` — injected automatically by Railway; do not set manually
 
 ## Common Commands
 
@@ -166,6 +188,15 @@ pip install -r pipeline/requirements.txt
 
 # Install MCP server dependencies
 pip install -r mcp_server/requirements.txt
+
+# Railway — re-link service after CLI loses context
+railway service beacon-loop
+
+# Railway — redeploy demo branch
+railway up
+
+# Railway — tail live logs
+railway logs --tail 50
 ```
 
 ## Keeping Skills Up to Date
