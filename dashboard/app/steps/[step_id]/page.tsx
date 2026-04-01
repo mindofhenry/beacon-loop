@@ -9,6 +9,7 @@ type StepMetrics = {
   step_id: string
   step_number: number
   step_type: string | null
+  step_intent: string | null
   sequence_id: string
   sequence_name: string | null
   send_volume: number
@@ -16,7 +17,8 @@ type StepMetrics = {
   reply_count: number
   open_rate: number | null
   reply_rate: number | null
-  flagged: boolean
+  flag_type: string
+  flag_confidence: number | null
 }
 
 type RewriteSuggestion = {
@@ -50,7 +52,7 @@ export default function StepPage({
         supabase
           .from('step_performance')
           .select(
-            'step_id, step_number, step_type, sequence_id, sequence_name, send_volume, open_count, reply_count, open_rate, reply_rate, flagged'
+            'step_id, step_number, step_type, step_intent, sequence_id, sequence_name, send_volume, open_count, reply_count, open_rate, reply_rate, flag_type, flag_confidence'
           )
           .eq('step_id', step_id)
           .limit(1)
@@ -102,7 +104,7 @@ export default function StepPage({
         <>
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-1">
-              {metrics.flagged && <AlertTriangle size={16} className="text-amber-500" />}
+              {metrics.flag_type !== 'none' && <AlertTriangle size={16} className="text-amber-500" />}
               <h1 className="font-mono text-xl font-semibold text-slate-100">
                 Step {metrics.step_number}
               </h1>
@@ -123,7 +125,7 @@ export default function StepPage({
             <MetricCard
               label="Reply Rate"
               value={fmt(metrics.reply_rate)}
-              accent={metrics.flagged}
+              accent={metrics.flag_type !== 'none'}
             />
           </div>
 

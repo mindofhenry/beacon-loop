@@ -11,8 +11,11 @@ type UnderperformingRow = {
   sequence_name: string | null
   step_number: number
   step_type: string | null
+  step_intent: string | null
   reply_rate: number | null
   send_volume: number
+  flag_type: string
+  flag_confidence: number | null
 }
 
 function fmt(rate: number | null): string {
@@ -30,9 +33,9 @@ export default function UnderperformingPage() {
     async function load() {
       const { data, error } = await supabase
         .from('step_performance')
-        .select('step_id, sequence_id, sequence_name, step_number, step_type, reply_rate, send_volume')
-        .eq('flagged', true)
-        .order('reply_rate', { ascending: true })
+        .select('step_id, sequence_id, sequence_name, step_number, step_type, step_intent, reply_rate, send_volume, flag_type, flag_confidence')
+        .neq('flag_type', 'none')
+        .order('flag_confidence', { ascending: false })
 
       if (error) {
         setError(error.message)

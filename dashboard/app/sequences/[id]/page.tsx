@@ -11,13 +11,15 @@ type StepRow = {
   step_id: string
   step_number: number
   step_type: string | null
+  step_intent: string | null
   send_volume: number
   open_count: number
   click_count: number
   reply_count: number
   open_rate: number | null
   reply_rate: number | null
-  flagged: boolean
+  flag_type: string
+  flag_confidence: number | null
   sequence_id: string
   sequence_name: string | null
 }
@@ -44,7 +46,7 @@ export default function SequencePage({
       const { data, error } = await supabase
         .from('step_performance')
         .select(
-          'id, step_id, step_number, step_type, send_volume, open_count, click_count, reply_count, open_rate, reply_rate, flagged, sequence_id, sequence_name'
+          'id, step_id, step_number, step_type, step_intent, send_volume, open_count, click_count, reply_count, open_rate, reply_rate, flag_type, flag_confidence, sequence_id, sequence_name'
         )
         .eq('sequence_id', id)
         .order('step_number')
@@ -113,9 +115,9 @@ export default function SequencePage({
               {steps.map((step) => (
                 <tr
                   key={step.step_id}
-                  onClick={() => step.flagged ? router.push(`/steps/${step.step_id}`) : undefined}
+                  onClick={() => step.flag_type !== 'none' ? router.push(`/steps/${step.step_id}`) : undefined}
                   className={`border-b border-[#1a1a1a] transition-colors duration-150 ${
-                    step.flagged
+                    step.flag_type !== 'none'
                       ? 'cursor-pointer hover:bg-[#1a0a00]'
                       : 'hover:bg-[#0f0f0f]'
                   }`}
@@ -142,12 +144,12 @@ export default function SequencePage({
                     <span className="font-mono text-slate-100">{fmt(step.open_rate)}</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={`font-mono ${step.flagged ? 'text-amber-500' : 'text-slate-100'}`}>
+                    <span className={`font-mono ${step.flag_type !== 'none' ? 'text-amber-500' : 'text-slate-100'}`}>
                       {fmt(step.reply_rate)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {step.flagged ? (
+                    {step.flag_type !== 'none' ? (
                       <span className="inline-flex items-center gap-1 font-sans text-xs text-amber-500">
                         <AlertTriangle size={12} />
                         Flagged
