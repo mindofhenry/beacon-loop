@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { X, RefreshCw, Loader2, Mail, Phone, Globe } from 'lucide-react'
+import { X, RefreshCw, Loader2, Mail, Phone, Globe, ChevronRight } from 'lucide-react'
 import {
   BarChart,
   Bar,
@@ -20,6 +20,7 @@ type StepData = {
   step_type: string
   step_intent: string | null
   subject: string | null
+  body_text: string | null
   send_volume: number
   open_rate: number
   reply_rate: number
@@ -51,15 +52,10 @@ type Props = {
   onClose: () => void
 }
 
-const tierColors = {
-  green: 'bg-[#22c55e]',
-  yellow: 'bg-[#F59E0B]',
-  red: 'bg-[#ef4444]',
-}
-
-const severityColors = {
-  FLAGGED: { bg: 'bg-[#F59E0B]/10', border: 'border-l-[#F59E0B]', badge: 'bg-[#F59E0B]' },
-  OK: { bg: 'bg-slate-800/30', border: 'border-l-slate-600', badge: 'bg-slate-600' },
+const tierPill: Record<'green' | 'yellow' | 'red', { bg: string; color: string; border: string }> = {
+  green:  { bg: '#052010', color: '#4ade80', border: '#0d3d1c' },
+  yellow: { bg: '#1a1200', color: '#fbbf24', border: '#332400' },
+  red:    { bg: '#1a0505', color: '#f87171', border: '#331010' },
 }
 
 function StepIcon({ type }: { type: string }) {
@@ -111,7 +107,6 @@ export default function SequenceSlideOut({
     fetchSummary()
   }, [fetchDetail, fetchSummary])
 
-  // Chart data
   const chartData = (detail?.steps ?? []).map((s) => ({
     name: `Step ${s.step_number}`,
     replyRate: Number((s.reply_rate * 100).toFixed(2)),
@@ -119,55 +114,105 @@ export default function SequenceSlideOut({
     stepType: s.step_type,
   }))
 
-  // Find the step being rewritten (for the modal)
   const rewriteStep = detail?.steps.find((s) => s.step_id === rewriteStepId)
+  const pill = tierPill[tier]
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
 
       {/* Slide-out panel */}
-      <div className="fixed top-0 right-0 z-50 h-full w-full md:w-[50vw] bg-[#0f0f0f] border-l border-[#1f1f1f] overflow-y-auto transform transition-transform duration-200 ease-out translate-x-0">
+      <div
+        className="fixed top-0 right-0 z-50 h-full w-full md:w-[50vw] overflow-y-auto transform transition-transform duration-200 ease-out translate-x-0"
+        style={{ background: '#0a0a0a', borderLeft: '1px solid #1c1c1c' }}
+      >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#0f0f0f] border-b border-[#1f1f1f] px-6 py-4 flex items-center justify-between">
+        <div
+          className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
+          style={{ background: '#0a0a0a', borderBottom: '1px solid #1c1c1c' }}
+        >
           <div className="flex items-center gap-3">
-            <h2 className="font-mono text-lg text-slate-100">
+            <span
+              style={{
+                fontFamily: 'IBM Plex Sans',
+                fontSize: '13px',
+                fontWeight: 400,
+                color: '#aaa',
+                letterSpacing: '0.04em',
+              }}
+            >
               {detail?.sequence_name ?? sequenceId}
-            </h2>
+            </span>
             {detail?.source && (
-              <span className="font-sans text-xs bg-[#1E40AF] text-white px-2.5 py-0.5 rounded-full">
+              <span
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '9px',
+                  background: '#141414',
+                  color: '#555',
+                  border: '1px solid #222',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                }}
+              >
                 {detail.source}
               </span>
             )}
             <span
-              className={`font-mono text-xs text-white px-2.5 py-0.5 rounded-full ${tierColors[tier]}`}
+              style={{
+                fontFamily: 'IBM Plex Mono',
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                background: pill.bg,
+                color: pill.color,
+                border: `1px solid ${pill.border}`,
+              }}
             >
               {(healthScore * 100).toFixed(0)}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-100 transition-colors duration-150 cursor-pointer"
+            className="transition-colors duration-150 cursor-pointer"
+            style={{ color: '#333' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#333')}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         <div className="px-6 py-6 space-y-6">
-          {/* Claude sequence summary */}
-          <div className="bg-[#0f1a2e] border-l-3 border-[#1E40AF] rounded-r-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-sans text-xs text-[#3B82F6]">
+          {/* Sequence Intelligence */}
+          <div
+            style={{
+              background: '#0f0f0f',
+              border: '1px solid #1c1c1c',
+              borderRadius: '6px',
+              padding: '16px',
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#333',
+                }}
+              >
                 Sequence Intelligence
               </span>
               <button
                 onClick={() => fetchSummary(true)}
                 disabled={loadingSummary}
-                className="flex items-center gap-1.5 text-[#F59E0B] font-sans text-xs hover:opacity-80 transition-opacity duration-150 cursor-pointer"
+                className="flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
+                style={{ fontFamily: 'IBM Plex Mono', fontSize: '10px', color: '#555' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#555')}
               >
                 {loadingSummary ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -179,51 +224,68 @@ export default function SequenceSlideOut({
             </div>
             {loadingSummary ? (
               <div className="space-y-2">
-                <div className="h-3 bg-slate-700/50 rounded animate-pulse w-full" />
-                <div className="h-3 bg-slate-700/50 rounded animate-pulse w-3/4" />
+                <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-full" />
+                <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
               </div>
             ) : (
-              <p className="font-sans text-sm text-slate-200 leading-relaxed">
+              <p
+                style={{
+                  fontFamily: 'IBM Plex Sans',
+                  fontSize: '12px',
+                  color: '#888',
+                  lineHeight: 1.6,
+                }}
+              >
                 {summary?.summary_text ?? 'No summary available.'}
               </p>
             )}
           </div>
 
-          {/* Step waterfall chart */}
+          {/* Reply Rate by Step chart */}
           {loadingDetail ? (
-            <div className="flex items-center gap-2 text-slate-400 text-sm font-sans py-8 justify-center">
-              <Loader2 size={16} className="animate-spin" />
-              Loading steps...
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-[#1c1c1c] rounded-lg animate-pulse" />
+              ))}
             </div>
           ) : chartData.length > 0 ? (
             <div>
-              <h3 className="font-sans text-xs text-slate-400 mb-3">
+              <p
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#333',
+                  marginBottom: '12px',
+                }}
+              >
                 Reply Rate by Step
-              </h3>
+              </p>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'Fira Sans' }}
-                    axisLine={{ stroke: '#1f1f1f' }}
+                    tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Sans' }}
+                    axisLine={{ stroke: '#1c1c1c' }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'Fira Code' }}
-                    axisLine={{ stroke: '#1f1f1f' }}
+                    tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Mono' }}
+                    axisLine={{ stroke: '#1c1c1c' }}
                     tickLine={false}
                     unit="%"
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#111111',
-                      border: '1px solid #1f1f1f',
-                      borderRadius: '8px',
-                      fontFamily: 'Fira Sans',
+                      backgroundColor: '#0f0f0f',
+                      border: '1px solid #1c1c1c',
+                      borderRadius: '6px',
+                      fontFamily: 'IBM Plex Sans',
                       fontSize: '12px',
                     }}
-                    labelStyle={{ color: '#f1f5f9', fontFamily: 'Fira Code' }}
-                    itemStyle={{ color: '#94a3b8' }}
+                    labelStyle={{ color: '#aaa', fontFamily: 'IBM Plex Mono' }}
+                    itemStyle={{ color: '#555' }}
                     formatter={(value, _name, props) => {
                       const p = props?.payload as { severity?: string; stepType?: string } | undefined
                       return [`${value}% (${p?.severity ?? ''})`, p?.stepType ?? '']
@@ -233,17 +295,13 @@ export default function SequenceSlideOut({
                     y={3.5}
                     stroke="#F59E0B"
                     strokeDasharray="4 4"
-                    label={{ value: 'Flag threshold', fill: '#F59E0B', fontSize: 10, fontFamily: 'Fira Sans' }}
+                    label={{ value: 'Flag threshold', fill: '#F59E0B', fontSize: 10, fontFamily: 'IBM Plex Mono' }}
                   />
-                  <Bar
-                    dataKey="replyRate"
-                    radius={[4, 4, 0, 0]}
-                    isAnimationActive={true}
-                  >
+                  <Bar dataKey="replyRate" radius={[4, 4, 0, 0]} isAnimationActive={true}>
                     {chartData.map((entry, index) => (
                       <Cell
                         key={index}
-                        fill={entry.severity === 'FLAGGED' ? '#F59E0B' : '#22c55e'}
+                        fill={entry.severity === 'FLAGGED' ? '#f87171' : '#4ade80'}
                       />
                     ))}
                   </Bar>
@@ -253,53 +311,160 @@ export default function SequenceSlideOut({
           ) : null}
 
           {/* Step cards */}
-          {detail?.steps && (
+          {!loadingDetail && detail?.steps && (
             <div className="space-y-2">
-              <h3 className="font-sans text-xs text-slate-400 mb-2">Steps</h3>
+              <p
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#333',
+                  marginBottom: '8px',
+                }}
+              >
+                Steps
+              </p>
               {detail.steps.map((step) => {
-                const sc = severityColors[step.severity]
-                const clickable = step.severity === 'FLAGGED'
+                const flagged = step.severity === 'FLAGGED'
                 return (
                   <div
                     key={step.step_id}
-                    onClick={clickable ? () => setRewriteStepId(step.step_id) : undefined}
-                    className={`${sc.bg} border-l-2 ${sc.border} rounded-r-lg p-4 transition-all duration-150 ${
-                      clickable
-                        ? 'cursor-pointer hover:bg-opacity-20'
-                        : ''
-                    }`}
+                    onClick={flagged ? () => setRewriteStepId(step.step_id) : undefined}
+                    className={`group p-4 transition-all duration-150 ${flagged ? 'cursor-pointer' : ''}`}
+                    style={{
+                      background: flagged ? '#0d0606' : 'transparent',
+                      borderLeft: flagged ? '2px solid #f87171' : '2px solid #1c1c1c',
+                    }}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-slate-400 bg-[#1f1f1f] px-2 py-0.5 rounded">
+                        <span
+                          style={{
+                            fontFamily: 'IBM Plex Mono',
+                            fontSize: '9px',
+                            color: '#333',
+                            background: '#141414',
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                          }}
+                        >
                           {step.step_number}
                         </span>
-                        <span className="text-slate-400">
+                        <span style={{ color: '#555' }}>
                           <StepIcon type={step.step_type} />
                         </span>
-                        <span className="font-sans text-xs text-slate-400">
+                        <span
+                          style={{
+                            fontFamily: 'IBM Plex Sans',
+                            fontSize: '11px',
+                            color: '#888',
+                          }}
+                        >
                           {step.step_type}
                         </span>
                       </div>
-                      <span
-                        className={`font-mono text-[10px] text-white px-2 py-0.5 rounded-full ${sc.badge}`}
-                      >
-                        {step.severity}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {step.step_intent && (
+                          <span
+                            style={{
+                              fontFamily: 'IBM Plex Mono',
+                              fontSize: '9px',
+                              background: '#141414',
+                              color: '#555',
+                              border: '1px solid #222',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {step.step_intent}
+                          </span>
+                        )}
+                        {flagged ? (
+                          <span
+                            style={{
+                              fontFamily: 'IBM Plex Mono',
+                              fontSize: '10px',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: '#1a0505',
+                              color: '#f87171',
+                              border: '1px solid #331010',
+                            }}
+                          >
+                            FLAGGED
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontFamily: 'IBM Plex Mono',
+                              fontSize: '10px',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: '#141414',
+                              color: '#555',
+                              border: '1px solid #222',
+                            }}
+                          >
+                            OK
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-baseline gap-4">
-                      <span className="font-mono text-lg text-slate-100">
+                    <div className="flex items-center gap-4">
+                      <span
+                        style={{
+                          fontFamily: 'IBM Plex Mono',
+                          fontSize: '18px',
+                          color: '#e5e5e5',
+                        }}
+                      >
                         {fmt(step.reply_rate)}
                       </span>
-                      <span className="font-mono text-xs text-slate-400">
+                      <span
+                        style={{
+                          fontFamily: 'IBM Plex Mono',
+                          fontSize: '11px',
+                          color: '#555',
+                        }}
+                      >
                         open {fmt(step.open_rate)}
                       </span>
-                      <span className="font-mono text-xs text-slate-400">
+                      <span
+                        style={{
+                          fontFamily: 'IBM Plex Mono',
+                          fontSize: '11px',
+                          color: '#555',
+                        }}
+                      >
                         mtg {fmt(step.meeting_rate)}
                       </span>
+                      <span
+                        style={{
+                          fontFamily: 'IBM Plex Mono',
+                          fontSize: '11px',
+                          color: '#555',
+                        }}
+                      >
+                        {step.send_volume} sends
+                      </span>
+                      {flagged && (
+                        <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <ChevronRight size={14} style={{ color: '#555' }} />
+                        </span>
+                      )}
                     </div>
                     {step.subject && (
-                      <p className="font-sans text-xs text-slate-500 mt-1 truncate">
+                      <p
+                        className="truncate"
+                        style={{
+                          fontFamily: 'IBM Plex Sans',
+                          fontSize: '11px',
+                          color: '#444',
+                          fontStyle: 'italic',
+                          marginTop: '4px',
+                        }}
+                      >
                         {step.subject}
                       </p>
                     )}
@@ -319,7 +484,8 @@ export default function SequenceSlideOut({
           stepType={rewriteStep.step_type}
           sequenceName={detail?.sequence_name ?? sequenceId}
           currentSubject={rewriteStep.subject}
-          currentBody={null}
+          currentBody={rewriteStep.body_text ?? null}
+          healthScore={rewriteStep.health_score_v2}
           personaConfigId={personaConfigId}
           onClose={() => setRewriteStepId(null)}
         />

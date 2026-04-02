@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, AlertTriangle } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type StepMetrics = {
@@ -33,6 +33,48 @@ type RewriteSuggestion = {
 function fmt(rate: number | null): string {
   if (rate == null) return '—'
   return `${(rate * 100).toFixed(1)}%`
+}
+
+function MetricCard({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string
+  value: string
+  valueClassName?: string
+}) {
+  return (
+    <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-4">
+      <p
+        className="font-mono text-[9px] uppercase text-[#333] mb-2"
+        style={{ letterSpacing: '0.08em' }}
+      >
+        {label}
+      </p>
+      <p className={`font-mono text-xl font-medium ${valueClassName ?? 'text-[#aaa]'}`}>{value}</p>
+    </div>
+  )
+}
+
+function MetricCardSmall({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-4">
+      <p
+        className="font-mono text-[9px] uppercase text-[#333] mb-2"
+        style={{ letterSpacing: '0.08em' }}
+      >
+        {label}
+      </p>
+      <p className="font-mono text-sm text-[#aaa]">{value}</p>
+    </div>
+  )
 }
 
 export default function StepPage({
@@ -81,91 +123,112 @@ export default function StepPage({
   }, [step_id])
 
   const backHref = metrics ? `/sequences/${metrics.sequence_id}` : '/'
+  const backLabel = metrics?.sequence_name ?? 'Back'
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <Link
         href={backHref}
-        className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-100 text-sm font-sans transition-colors duration-150 cursor-pointer mb-6"
+        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#333] hover:text-[#888] transition-colors duration-150 cursor-pointer mb-6"
       >
-        <ChevronLeft size={16} />
-        {metrics ? `Sequence ${metrics.sequence_id}` : 'Back'}
+        <ChevronLeft size={12} />
+        {backLabel}
       </Link>
 
       {loading && (
-        <p className="text-slate-400 font-sans text-sm">Loading...</p>
+        <>
+          <div className="h-8 w-48 bg-[#1c1c1c] rounded animate-pulse mb-6" />
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-16 bg-[#1c1c1c] rounded animate-pulse" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-40 bg-[#1c1c1c] rounded animate-pulse" />
+            <div className="h-40 bg-[#1c1c1c] rounded animate-pulse" />
+          </div>
+        </>
       )}
 
       {error && (
-        <p className="text-red-400 font-sans text-sm">Error: {error}</p>
+        <p className="font-sans text-sm text-red-400">Error: {error}</p>
       )}
 
       {!loading && !error && metrics && (
         <>
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-1">
-              {metrics.flag_type !== 'none' && <AlertTriangle size={16} className="text-amber-500" />}
-              <h1 className="font-mono text-xl font-semibold text-slate-100">
-                Step {metrics.step_number}
-              </h1>
-              {metrics.step_type && (
-                <span className="font-sans text-xs text-slate-400 bg-[#1a1a1a] px-2 py-0.5 rounded">
-                  {metrics.step_type}
-                </span>
-              )}
-            </div>
-            <p className="font-mono text-xs text-slate-400">{step_id}</p>
-          </div>
+          <p
+            className="font-sans text-[13px] font-normal text-[#aaa] mb-6"
+            style={{ letterSpacing: '0.04em' }}
+          >
+            step {metrics.step_number}
+          </p>
 
-          {/* Step Metrics Row */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             <MetricCard label="Send Volume" value={metrics.send_volume.toLocaleString()} />
             <MetricCard label="Opens" value={metrics.open_count.toLocaleString()} />
             <MetricCard label="Replies" value={metrics.reply_count.toLocaleString()} />
             <MetricCard
               label="Reply Rate"
               value={fmt(metrics.reply_rate)}
-              accent={metrics.flag_type !== 'none'}
+              valueClassName={metrics.flag_type !== 'none' ? 'text-[#f87171]' : undefined}
             />
+            <MetricCard label="Open Rate" value={fmt(metrics.open_rate)} />
+            <MetricCardSmall label="Flag Type" value={metrics.flag_type} />
           </div>
 
-          {/* Rewrite Panel */}
           {suggestion ? (
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left: Diagnosis */}
-              <div className="border border-[#262626] rounded-lg p-5 bg-[#0f0f0f]">
-                <h2 className="font-sans text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-5">
+                <p
+                  className="font-mono text-[9px] uppercase text-[#333] mb-3"
+                  style={{ letterSpacing: '0.08em' }}
+                >
                   Diagnosis
-                </h2>
-                <p className="font-sans text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                </p>
+                <p className="font-sans text-[12px] text-[#aaa] whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
                   {suggestion.diagnosis}
                 </p>
               </div>
 
-              {/* Right: Rewrite */}
-              <div className="border border-amber-500/30 rounded-lg p-5 bg-[#0f0f0f]">
-                <h2 className="font-sans text-xs font-semibold text-amber-500 uppercase tracking-wider mb-4">
+              <div
+                className="bg-[#0f0f0f] rounded-lg p-5"
+                style={{ border: '1px solid #2a1515' }}
+              >
+                <p
+                  className="font-mono text-[9px] uppercase text-[#333] mb-3"
+                  style={{ letterSpacing: '0.08em' }}
+                >
                   Suggested Rewrite
-                </h2>
+                </p>
                 <div className="mb-4">
-                  <p className="font-sans text-xs text-slate-400 mb-1">Subject</p>
-                  <p className="font-mono text-sm text-slate-100">{suggestion.suggested_subject}</p>
+                  <p
+                    className="font-mono text-[9px] uppercase text-[#333] mb-1"
+                    style={{ letterSpacing: '0.08em' }}
+                  >
+                    Subject
+                  </p>
+                  <p className="font-mono text-sm text-[#aaa]">{suggestion.suggested_subject}</p>
                 </div>
                 <div>
-                  <p className="font-sans text-xs text-slate-400 mb-1">Body</p>
-                  <p className="font-sans text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  <p
+                    className="font-mono text-[9px] uppercase text-[#333] mb-1"
+                    style={{ letterSpacing: '0.08em' }}
+                  >
+                    Body
+                  </p>
+                  <p className="font-sans text-[12px] text-[#aaa] whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
                     {suggestion.suggested_body}
                   </p>
                 </div>
-                <p className="font-mono text-xs text-slate-500 mt-4">
+                <p className="font-mono text-[10px] text-[#333] mt-4" style={{ letterSpacing: '0.04em' }}>
                   {suggestion.model_used} · {new Date(suggestion.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="border border-[#262626] rounded-lg p-6 text-center">
-              <p className="font-sans text-sm text-slate-400">
-                No rewrite suggestion generated yet.
+            <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-8 flex items-center justify-center">
+              <p className="font-mono text-[11px] text-[#333]" style={{ letterSpacing: '0.04em' }}>
+                no rewrite suggestion generated yet
               </p>
             </div>
           )}
@@ -173,27 +236,8 @@ export default function StepPage({
       )}
 
       {!loading && !error && !metrics && (
-        <p className="text-slate-400 font-sans text-sm">Step not found.</p>
+        <p className="font-sans text-sm text-[#555]">Step not found.</p>
       )}
-    </div>
-  )
-}
-
-function MetricCard({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string
-  value: string
-  accent?: boolean
-}) {
-  return (
-    <div className="border border-[#262626] rounded-lg p-4 bg-[#0f0f0f]">
-      <p className="font-sans text-xs text-slate-400 mb-1">{label}</p>
-      <p className={`font-mono text-lg font-semibold ${accent ? 'text-amber-500' : 'text-slate-100'}`}>
-        {value}
-      </p>
     </div>
   )
 }

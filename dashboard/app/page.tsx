@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Loader2, Activity, Mail, DollarSign, AlertTriangle } from 'lucide-react'
+import { RefreshCw, Loader2 } from 'lucide-react'
 import {
   BarChart,
   Bar,
@@ -40,19 +40,54 @@ const tierFill = { green: '#22c55e', yellow: '#F59E0B', red: '#ef4444' }
 function StatCard({
   label,
   value,
-  icon: Icon,
+  subLabel,
 }: {
   label: string
   value: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  subLabel: string
 }) {
   return (
-    <div className="bg-[#111111] border border-[#1f1f1f] rounded-xl p-5 flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <Icon size={14} className="text-slate-500" />
-        <span className="font-sans text-xs text-slate-400">{label}</span>
+    <div
+      style={{
+        background: '#0f0f0f',
+        border: '1px solid #1c1c1c',
+        borderRadius: '7px',
+        padding: '10px 12px',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'IBM Plex Mono, monospace',
+          fontSize: '9px',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#3a3a3a',
+          marginBottom: '5px',
+        }}
+      >
+        {label}
       </div>
-      <span className="font-mono text-2xl text-slate-100">{value}</span>
+      <div
+        style={{
+          fontFamily: 'IBM Plex Mono, monospace',
+          fontSize: '22px',
+          fontWeight: 500,
+          color: '#e5e5e5',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          fontFamily: 'IBM Plex Mono, monospace',
+          fontSize: '9px',
+          color: '#333',
+          marginTop: '3px',
+        }}
+      >
+        {subLabel}
+      </div>
     </div>
   )
 }
@@ -125,60 +160,107 @@ export default function OrgHealthPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="font-mono text-xl font-semibold text-slate-100 mb-6">
-        Org Health Overview
-      </h1>
+      {/* Page title */}
+      <p
+        style={{
+          fontFamily: 'IBM Plex Sans, sans-serif',
+          fontSize: '13px',
+          fontWeight: 400,
+          color: '#aaa',
+          letterSpacing: '0.04em',
+          textTransform: 'lowercase',
+          marginBottom: '16px',
+        }}
+      >
+        org health
+      </p>
+      <div className="border-b border-[#1c1c1c] mb-6" />
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          label="Active Sequences"
-          value={String(activeCount)}
-          icon={Activity}
-        />
-        <StatCard
-          label="Org Avg Reply Rate"
-          value={`${(avgReply * 100).toFixed(1)}%`}
-          icon={Mail}
-        />
-        <StatCard
-          label="Total Pipeline Influenced"
-          value={`$${totalPipeline >= 1_000_000 ? `${(totalPipeline / 1_000_000).toFixed(1)}M` : totalPipeline.toLocaleString()}`}
-          icon={DollarSign}
-        />
-        <StatCard
-          label="Flagged Steps"
-          value={String(flaggedCount)}
-          icon={AlertTriangle}
-        />
-      </div>
+      {loadingSeqs ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-20 bg-[#1c1c1c] rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            label="Active Sequences"
+            value={String(activeCount)}
+            subLabel="outreach + salesloft"
+          />
+          <StatCard
+            label="Org Avg Reply Rate"
+            value={`${(avgReply * 100).toFixed(1)}%`}
+            subLabel="reply / sends"
+          />
+          <StatCard
+            label="Total Pipeline Influenced"
+            value={`$${totalPipeline >= 1_000_000 ? `${(totalPipeline / 1_000_000).toFixed(1)}M` : totalPipeline.toLocaleString()}`}
+            subLabel="u-shaped attribution"
+          />
+          <StatCard
+            label="Flagged Steps"
+            value={String(flaggedCount)}
+            subLabel="below threshold"
+          />
+        </div>
+      )}
 
-      {/* Claude org summary */}
-      <div className="bg-[#0f1a2e] border-l-3 border-[#1E40AF] rounded-r-lg p-5 mb-6">
+      {/* Org Intelligence panel */}
+      <div
+        style={{
+          background: '#0f0f0f',
+          border: '1px solid #1c1c1c',
+          borderRadius: '7px',
+          padding: '14px 18px',
+          marginBottom: '24px',
+        }}
+      >
         <div className="flex items-center justify-between mb-2">
-          <span className="font-sans text-xs text-[#3B82F6]">
-            Org Intelligence
+          <span
+            style={{
+              fontFamily: 'IBM Plex Mono, monospace',
+              fontSize: '9px',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#333',
+            }}
+          >
+            org intelligence
           </span>
           <button
             onClick={() => fetchSummary(true)}
             disabled={loadingSummary}
-            className="flex items-center gap-1.5 text-[#F59E0B] font-sans text-xs hover:opacity-80 transition-opacity duration-150 cursor-pointer"
+            className="flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0"
+            style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', color: '#555' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#888' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#555' }}
           >
             {loadingSummary ? (
               <Loader2 size={12} className="animate-spin" />
             ) : (
               <RefreshCw size={12} />
             )}
-            Refresh
+            refresh
           </button>
         </div>
         {loadingSummary ? (
           <div className="space-y-2">
-            <div className="h-3 bg-slate-700/50 rounded animate-pulse w-full" />
-            <div className="h-3 bg-slate-700/50 rounded animate-pulse w-3/4" />
+            <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-full" />
+            <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
           </div>
         ) : (
-          <p className="font-sans text-sm text-slate-200 leading-relaxed">
+          <p
+            style={{
+              fontFamily: 'IBM Plex Sans, sans-serif',
+              fontSize: '12px',
+              color: '#888',
+              lineHeight: 1.6,
+              margin: 0,
+            }}
+          >
             {summary?.summary_text ?? 'No summary available.'}
           </p>
         )}
@@ -186,15 +268,21 @@ export default function OrgHealthPage() {
 
       {/* Health bar chart */}
       {loadingSeqs ? (
-        <div className="flex items-center gap-2 text-slate-400 text-sm font-sans py-8 justify-center">
-          <Loader2 size={16} className="animate-spin" />
-          Loading sequences...
-        </div>
+        <div className="h-[300px] w-full bg-[#1c1c1c] rounded-lg animate-pulse" />
       ) : chartData.length > 0 ? (
         <div>
-          <h2 className="font-sans text-xs text-slate-400 mb-3">
-            Sequence Health Scores
-          </h2>
+          <p
+            style={{
+              fontFamily: 'IBM Plex Mono, monospace',
+              fontSize: '9px',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#333',
+              marginBottom: '12px',
+            }}
+          >
+            sequence health scores
+          </p>
           <ResponsiveContainer width="100%" height={chartHeight}>
             <BarChart
               data={chartData}
@@ -204,27 +292,27 @@ export default function OrgHealthPage() {
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'Fira Code' }}
-                axisLine={{ stroke: '#1f1f1f' }}
+                tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Mono' }}
+                axisLine={{ stroke: '#1c1c1c' }}
                 tickLine={false}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={180}
-                tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'Fira Sans' }}
-                axisLine={{ stroke: '#1f1f1f' }}
+                tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Mono' }}
+                axisLine={{ stroke: '#1c1c1c' }}
                 tickLine={false}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#111111',
-                  border: '1px solid #1f1f1f',
+                  border: '1px solid #1c1c1c',
                   borderRadius: '8px',
-                  fontFamily: 'Fira Sans',
+                  fontFamily: 'IBM Plex Sans',
                   fontSize: '12px',
                 }}
-                labelStyle={{ color: '#f1f5f9', fontFamily: 'Fira Code' }}
+                labelStyle={{ color: '#f1f5f9', fontFamily: 'IBM Plex Mono' }}
                 formatter={(value, _name, props) => {
                   const p = props?.payload as { flagged?: number; fullName?: string } | undefined
                   return [`Score: ${value} | Flagged: ${p?.flagged ?? 0}`, p?.fullName ?? '']
@@ -234,13 +322,13 @@ export default function OrgHealthPage() {
                 x={50}
                 stroke="#F59E0B"
                 strokeDasharray="4 4"
-                label={{ value: 'Yellow', fill: '#F59E0B', fontSize: 10, fontFamily: 'Fira Sans', position: 'top' }}
+                label={{ value: 'Yellow', fill: '#F59E0B', fontSize: 10, fontFamily: 'IBM Plex Mono', position: 'top' }}
               />
               <ReferenceLine
                 x={70}
                 stroke="#22c55e"
                 strokeDasharray="4 4"
-                label={{ value: 'Green', fill: '#22c55e', fontSize: 10, fontFamily: 'Fira Sans', position: 'top' }}
+                label={{ value: 'Green', fill: '#22c55e', fontSize: 10, fontFamily: 'IBM Plex Mono', position: 'top' }}
               />
               <Bar
                 dataKey="score"

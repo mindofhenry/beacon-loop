@@ -108,7 +108,7 @@ def seed(sb: Client) -> None:
     written = 0
     for i in range(0, len(records), BATCH):
         chunk = records[i : i + BATCH]
-        sb.table("sequence_steps").insert(chunk).execute()
+        sb.table("sequence_steps").upsert(chunk, on_conflict='step_id').execute()
         written += len(chunk)
 
     resp = sb.table("sequence_steps").select("id", count="exact").execute()

@@ -13,6 +13,8 @@ type RewriteData = {
   suggested_body: string
   confidence: string | null
   explanation: string | null
+  current_subject: string | null
+  current_body: string | null
 }
 
 type Props = {
@@ -22,6 +24,7 @@ type Props = {
   sequenceName: string
   currentSubject: string | null
   currentBody: string | null
+  healthScore: number
   personaConfigId: string
   onClose: () => void
 }
@@ -33,6 +36,7 @@ export default function RewriteModal({
   sequenceName,
   currentSubject,
   currentBody,
+  healthScore,
   personaConfigId,
   onClose,
 }: Props) {
@@ -66,10 +70,10 @@ export default function RewriteModal({
 
   const confidenceColor =
     rewrite?.confidence === 'high'
-      ? 'bg-[#22c55e]'
+      ? { bg: '#052010', color: '#4ade80', border: '#0d3d1c' }
       : rewrite?.confidence === 'medium'
-        ? 'bg-[#F59E0B]'
-        : 'bg-[#ef4444]'
+        ? { bg: '#1a1200', color: '#fbbf24', border: '#332400' }
+        : { bg: '#1a0505', color: '#f87171', border: '#331010' }
 
   return (
     <div
@@ -77,51 +81,109 @@ export default function RewriteModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-[4px]" />
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.75)' }} />
 
       {/* Modal */}
       <div
-        className="relative z-10 bg-[#111111] border border-[#1f1f1f] rounded-xl max-w-[900px] w-[90%] max-h-[85vh] overflow-y-auto p-8"
+        className="relative z-10 w-[90%] max-h-[85vh] overflow-y-auto p-8"
+        style={{
+          background: '#0d0d0d',
+          border: '1px solid #252525',
+          borderRadius: '10px',
+          maxWidth: '900px',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-100 transition-colors duration-150 cursor-pointer"
+          className="absolute top-4 right-4 transition-colors duration-150 cursor-pointer"
+          style={{ color: '#333' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#333')}
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         {/* Header */}
         <div className="mb-6">
-          <h2 className="font-mono text-lg text-slate-100">
-            {sequenceName} — Step {stepNumber}
-          </h2>
-          <span className="font-mono text-xs text-slate-400">{stepType}</span>
+          <div className="flex items-center gap-3 mb-1">
+            <span
+              style={{
+                fontFamily: 'IBM Plex Sans',
+                fontSize: '13px',
+                fontWeight: 400,
+                color: '#aaa',
+              }}
+            >
+              {sequenceName} — Step {stepNumber}
+            </span>
+            <span
+              style={{
+                fontFamily: 'IBM Plex Mono',
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                background: '#1a0505',
+                color: '#f87171',
+                border: '1px solid #331010',
+              }}
+            >
+              {(healthScore * 100).toFixed(0)}
+            </span>
+          </div>
+          <span
+            style={{
+              fontFamily: 'IBM Plex Mono',
+              fontSize: '10px',
+              color: '#333',
+            }}
+          >
+            {stepType}
+          </span>
         </div>
 
         {loading ? (
-          <div className="flex items-center gap-2 text-slate-400 text-sm font-sans py-12 justify-center">
-            <Loader2 size={16} className="animate-spin" />
-            Loading...
+          <div className="space-y-4 py-4">
+            <div className="h-4 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
+            <div className="grid grid-cols-2 gap-6">
+              <div className="h-48 bg-[#1c1c1c] rounded-lg animate-pulse" />
+              <div className="h-48 bg-[#1c1c1c] rounded-lg animate-pulse" />
+            </div>
+            <div className="h-16 bg-[#1c1c1c] rounded-lg animate-pulse" />
           </div>
         ) : !rewrite ? (
           /* No rewrite exists — show generate button */
           <div className="flex flex-col items-center gap-4 py-12">
-            <p className="text-slate-400 font-sans text-sm">
-              No rewrite suggestion exists for this step yet.
+            <p
+              style={{
+                fontFamily: 'IBM Plex Mono',
+                fontSize: '11px',
+                color: '#333',
+              }}
+            >
+              no rewrite suggestion exists for this step yet.
             </p>
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="flex items-center gap-2 bg-[#F59E0B] text-white font-sans font-semibold text-sm px-6 py-3 rounded-lg hover:opacity-90 hover:-translate-y-[1px] transition-all duration-200 cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              style={{
+                fontFamily: 'IBM Plex Mono',
+                fontSize: '10px',
+                background: '#0f1729',
+                border: '1px solid #1e3a5f',
+                color: '#3b82f6',
+                padding: '6px 16px',
+                borderRadius: '6px',
+              }}
             >
               {generating ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={14} className="animate-spin" />
               ) : (
-                <RefreshCw size={16} />
+                <RefreshCw size={14} />
               )}
-              {generating ? 'Generating...' : 'Generate Rewrite'}
+              {generating ? 'generating...' : 'generate rewrite'}
             </button>
           </div>
         ) : (
@@ -130,45 +192,151 @@ export default function RewriteModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Current */}
               <div>
-                <h3 className="font-sans text-xs uppercase tracking-wider text-slate-400 mb-3">
+                <p
+                  style={{
+                    fontFamily: 'IBM Plex Mono',
+                    fontSize: '9px',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#333',
+                    marginBottom: '12px',
+                  }}
+                >
                   Current
-                </h3>
+                </p>
                 <div className="mb-3">
-                  <label className="font-sans text-xs text-slate-500 mb-1 block">
+                  <p
+                    style={{
+                      fontFamily: 'IBM Plex Mono',
+                      fontSize: '9px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#333',
+                      marginBottom: '6px',
+                    }}
+                  >
                     Subject
-                  </label>
-                  <div className="bg-[#0a0a0a] border border-[#1f1f1f] rounded-lg p-3 font-mono text-sm text-slate-300 min-h-[40px]">
-                    {currentSubject || '—'}
+                  </p>
+                  <div
+                    style={{
+                      background: '#0a0a0a',
+                      border: '1px solid #1a1a1a',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      fontFamily: 'IBM Plex Sans',
+                      fontSize: '11.5px',
+                      color: '#888',
+                      fontStyle: 'italic',
+                      minHeight: '40px',
+                    }}
+                  >
+                    {currentSubject ?? rewrite?.current_subject ?? '—'}
                   </div>
                 </div>
                 <div>
-                  <label className="font-sans text-xs text-slate-500 mb-1 block">
+                  <p
+                    style={{
+                      fontFamily: 'IBM Plex Mono',
+                      fontSize: '9px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#333',
+                      marginBottom: '6px',
+                    }}
+                  >
                     Body
-                  </label>
-                  <div className="bg-[#0a0a0a] border border-[#1f1f1f] rounded-lg p-3 font-mono text-sm text-slate-300 min-h-[120px] max-h-[250px] overflow-y-auto whitespace-pre-wrap">
-                    {currentBody || '—'}
+                  </p>
+                  <div
+                    style={{
+                      background: '#0a0a0a',
+                      border: '1px solid #1a1a1a',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      fontFamily: 'IBM Plex Sans',
+                      fontSize: '11.5px',
+                      color: '#888',
+                      fontStyle: 'italic',
+                      minHeight: '120px',
+                      maxHeight: '250px',
+                      overflowY: 'auto',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {currentBody ?? rewrite?.current_body ?? '—'}
                   </div>
                 </div>
               </div>
 
               {/* Suggested */}
               <div>
-                <h3 className="font-sans text-xs uppercase tracking-wider text-[#F59E0B] mb-3">
+                <p
+                  style={{
+                    fontFamily: 'IBM Plex Mono',
+                    fontSize: '9px',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#333',
+                    marginBottom: '12px',
+                  }}
+                >
                   Suggested
-                </h3>
+                </p>
                 <div className="mb-3">
-                  <label className="font-sans text-xs text-slate-500 mb-1 block">
+                  <p
+                    style={{
+                      fontFamily: 'IBM Plex Mono',
+                      fontSize: '9px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#333',
+                      marginBottom: '6px',
+                    }}
+                  >
                     Subject
-                  </label>
-                  <div className="bg-[#0a0a0a] border-l-2 border-[#F59E0B] border-r border-t border-b border-r-[#1f1f1f] border-t-[#1f1f1f] border-b-[#1f1f1f] rounded-lg p-3 font-mono text-sm text-slate-100 min-h-[40px]">
+                  </p>
+                  <div
+                    style={{
+                      background: '#03100a',
+                      border: '1px solid #0d3020',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      fontFamily: 'IBM Plex Sans',
+                      fontSize: '11.5px',
+                      color: '#aaa',
+                      minHeight: '40px',
+                    }}
+                  >
                     {rewrite.suggested_subject}
                   </div>
                 </div>
                 <div>
-                  <label className="font-sans text-xs text-slate-500 mb-1 block">
+                  <p
+                    style={{
+                      fontFamily: 'IBM Plex Mono',
+                      fontSize: '9px',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#333',
+                      marginBottom: '6px',
+                    }}
+                  >
                     Body
-                  </label>
-                  <div className="bg-[#0a0a0a] border-l-2 border-[#F59E0B] border-r border-t border-b border-r-[#1f1f1f] border-t-[#1f1f1f] border-b-[#1f1f1f] rounded-lg p-3 font-mono text-sm text-slate-100 min-h-[120px] max-h-[250px] overflow-y-auto whitespace-pre-wrap">
+                  </p>
+                  <div
+                    style={{
+                      background: '#03100a',
+                      border: '1px solid #0d3020',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      fontFamily: 'IBM Plex Sans',
+                      fontSize: '11.5px',
+                      color: '#aaa',
+                      minHeight: '120px',
+                      maxHeight: '250px',
+                      overflowY: 'auto',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
                     {rewrite.suggested_body}
                   </div>
                 </div>
@@ -178,7 +346,15 @@ export default function RewriteModal({
             {/* Confidence badge */}
             <div className="mb-4">
               <span
-                className={`inline-block font-mono text-xs text-white px-3 py-1 rounded-full ${confidenceColor}`}
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '10px',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  background: confidenceColor.bg,
+                  color: confidenceColor.color,
+                  border: `1px solid ${confidenceColor.border}`,
+                }}
               >
                 {(rewrite.confidence ?? 'medium').toUpperCase()}
               </span>
@@ -186,19 +362,61 @@ export default function RewriteModal({
 
             {/* Diagnosis */}
             <div className="mb-4">
-              <h4 className="font-sans text-xs text-slate-400 mb-2">Diagnosis</h4>
-              <p className="font-sans text-sm text-slate-200 leading-relaxed">
+              <p
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '9px',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: '#333',
+                  marginBottom: '8px',
+                }}
+              >
+                Diagnosis
+              </p>
+              <p
+                style={{
+                  fontFamily: 'IBM Plex Sans',
+                  fontSize: '12px',
+                  color: '#aaa',
+                  lineHeight: 1.6,
+                }}
+              >
                 {rewrite.diagnosis}
               </p>
             </div>
 
-            {/* Explanation */}
+            {/* Why This Works */}
             {rewrite.explanation && (
-              <div className="mb-6 bg-[#0f1a2e] border-l-3 border-[#1E40AF] rounded-r-lg p-4">
-                <h4 className="font-sans text-xs text-[#F59E0B] mb-2">
+              <div
+                className="mb-6"
+                style={{
+                  background: '#0f0f0f',
+                  border: '1px solid #1c1c1c',
+                  borderRadius: '6px',
+                  padding: '16px',
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: 'IBM Plex Mono',
+                    fontSize: '9px',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#333',
+                    marginBottom: '8px',
+                  }}
+                >
                   Why This Works
-                </h4>
-                <p className="font-sans text-sm text-slate-200 leading-relaxed">
+                </p>
+                <p
+                  style={{
+                    fontFamily: 'IBM Plex Sans',
+                    fontSize: '12px',
+                    color: '#888',
+                    lineHeight: 1.6,
+                  }}
+                >
                   {rewrite.explanation}
                 </p>
               </div>
@@ -209,14 +427,23 @@ export default function RewriteModal({
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="flex items-center gap-2 bg-[#F59E0B] text-white font-sans font-semibold text-sm px-5 py-2.5 rounded-lg hover:opacity-90 hover:-translate-y-[1px] transition-all duration-200 cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                style={{
+                  fontFamily: 'IBM Plex Mono',
+                  fontSize: '10px',
+                  background: '#0f1729',
+                  border: '1px solid #1e3a5f',
+                  color: '#3b82f6',
+                  padding: '6px 16px',
+                  borderRadius: '6px',
+                }}
               >
                 {generating ? (
-                  <Loader2 size={16} className="animate-spin" />
+                  <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <RefreshCw size={16} />
+                  <RefreshCw size={14} />
                 )}
-                {generating ? 'Generating...' : 'Regenerate'}
+                {generating ? 'generating...' : 'regenerate'}
               </button>
             </div>
           </>

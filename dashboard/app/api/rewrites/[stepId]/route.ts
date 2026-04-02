@@ -20,5 +20,17 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data: data ?? null })
+  // Fetch current subject + body from sequence_steps so callers have the "before" copy
+  const { data: stepCopy } = await supabaseServer
+    .from('sequence_steps')
+    .select('subject, body_text')
+    .eq('step_id', stepId)
+    .limit(1)
+    .maybeSingle()
+
+  return NextResponse.json({
+    data: data
+      ? { ...data, current_subject: stepCopy?.subject ?? null, current_body: stepCopy?.body_text ?? null }
+      : null,
+  })
 }

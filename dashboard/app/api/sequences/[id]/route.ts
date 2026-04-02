@@ -7,30 +7,41 @@ export async function GET(
 ) {
   const { id } = await params
 
-  // Fetch step_performance for this sequence
-  const { data: perfRows, error: perfError } = await supabaseServer
+  // Fetch step_performance for this sequence — order by pipeline_run_id desc so
+  // the latest run is first; we deduplicate below to one row per step_id.
+  const { data: allPerfRows, error: perfError } = await supabaseServer
     .from('step_performance')
     .select('*')
     .eq('sequence_id', id)
-    .order('step_number', { ascending: true })
+    .order('pipeline_run_id', { ascending: false })
 
   if (perfError) {
     return NextResponse.json({ error: perfError.message }, { status: 500 })
   }
-  if (!perfRows || perfRows.length === 0) {
+  if (!allPerfRows || allPerfRows.length === 0) {
     return NextResponse.json({ error: `No data for sequence ${id}` }, { status: 404 })
   }
+
+  // Keep only the latest row per step_id (first seen wins because we ordered desc)
+  const seenStepIds = new Set<string>()
+  const perfRows = allPerfRows
+    .filter((r) => {
+      if (seenStepIds.has(r.step_id)) return false
+      seenStepIds.add(r.step_id)
+      return true
+    })
+    .sort((a, b) => a.step_number - b.step_number)
 
   // Fetch sequence_steps for subjects
   const stepIds = perfRows.map((r) => r.step_id)
   const { data: stepRows } = await supabaseServer
     .from('sequence_steps')
-    .select('step_id, subject, step_type')
+    .select('step_id, subject, body_text, step_type')
     .in('step_id', stepIds)
 
-  const subjectMap = new Map<string, { subject: string; step_type: string }>()
+  const subjectMap = new Map<string, { subject: string; body_text: string | null; step_type: string }>()
   for (const row of stepRows ?? []) {
-    subjectMap.set(row.step_id, { subject: row.subject, step_type: row.step_type })
+    subjectMap.set(row.step_id, { subject: row.subject, body_text: row.body_text ?? null, step_type: row.step_type })
   }
 
   const first = perfRows[0]
@@ -45,6 +56,7 @@ export async function GET(
       step_type: stepInfo?.step_type ?? row.step_type,
       step_intent: row.step_intent ?? null,
       subject: stepInfo?.subject ?? null,
+      body_text: stepInfo?.body_text ?? null,
       send_volume: row.send_volume,
       open_rate: Number(row.open_rate) || 0,
       reply_rate: Number(row.reply_rate) || 0,

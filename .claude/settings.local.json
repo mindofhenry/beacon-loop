@@ -100,7 +100,8 @@
       "Bash(python pipeline/validate_attribution.py)",
       "Bash(npx next:*)",
       "Bash(pipeline\\\\.venv\\\\Scripts\\\\python.exe pipeline\\\\generators\\\\outreach_generator.py)",
-      "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/validate_attribution.py)"
+      "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/validate_attribution.py)",
+      "Bash(python pipeline/backfill_step_copy.py)"
     ]
   },
   "enableAllProjectMcpServers": true,

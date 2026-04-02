@@ -14,9 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-black text-slate-100 font-sans antialiased">
+      <body className="flex flex-row h-screen overflow-hidden bg-[#0a0a0a] text-slate-100 font-sans antialiased">
         <Nav />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </body>
     </html>
   )

@@ -73,7 +73,7 @@ If the subject line or opening line could apply to 1,000 companies without chang
 ## Your Task
 Respond with a JSON object containing exactly these five keys:
 
-1. "diagnosis": 2-3 sentences explaining why this step is underperforming based on the metrics and persona fit. Be specific about which selling principle the current copy violates.
+1. "diagnosis": 1-2 sentences maximum. State what metric is failing and the single most likely root cause. No elaboration.
 
 2. "suggested_subject": A single revised subject line optimized for this persona. Must pass the anti-template test.
 
@@ -81,7 +81,7 @@ Respond with a JSON object containing exactly these five keys:
 
 4. "confidence": One of "low", "medium", or "high". Base this on how much data you have to work with — "high" when metrics clearly point to a fixable issue and the persona context is rich, "low" when data is sparse or the problem is ambiguous.
 
-5. "explanation": Plain English written for a manager. Explain what changed between the original and the rewrite, which selling principle drove each specific change, and why it should perform better. No jargon. Example tone: "The original subject line gives a CISO no reason to open it. The rewrite leads with a board-level compliance pressure that's top of mind right now, which is why it's more likely to get opened."
+5. "explanation": Bullet points only. Maximum 3 bullets. Each bullet is one sentence. No prose paragraphs. Written for a rep.
 
 Respond with raw JSON only — no markdown fences."""
 
@@ -101,7 +101,7 @@ def generate_rewrite(
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1500,
+        max_tokens=1200,
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text.strip()

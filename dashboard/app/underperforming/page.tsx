@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type UnderperformingRow = {
@@ -15,12 +14,43 @@ type UnderperformingRow = {
   reply_rate: number | null
   send_volume: number
   flag_type: string
-  flag_confidence: number | null
 }
 
 function fmt(rate: number | null): string {
   if (rate == null) return '—'
   return `${(rate * 100).toFixed(1)}%`
+}
+
+function FlagPill({ type }: { type: string }) {
+  if (type === 'none') {
+    return (
+      <span
+        className="font-mono text-[10px] px-2 py-0.5 rounded"
+        style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+      >
+        {type}
+      </span>
+    )
+  }
+  return (
+    <span
+      className="font-mono text-[10px] px-2 py-0.5 rounded"
+      style={{ background: '#1a0505', color: '#f87171', border: '1px solid #331010' }}
+    >
+      {type}
+    </span>
+  )
+}
+
+function IntentPill({ children }: { children: string }) {
+  return (
+    <span
+      className="font-mono text-[10px] px-2 py-0.5 rounded"
+      style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+    >
+      {children}
+    </span>
+  )
 }
 
 export default function UnderperformingPage() {
@@ -43,7 +73,14 @@ export default function UnderperformingPage() {
         return
       }
 
-      setSteps((data ?? []) as UnderperformingRow[])
+      // Deduplicate to one row per step_id — step_performance has one row per pipeline run
+      const seenStepIds = new Set<string>()
+      const rows = ((data ?? []) as UnderperformingRow[]).filter((r) => {
+        if (seenStepIds.has(r.step_id)) return false
+        seenStepIds.add(r.step_id)
+        return true
+      })
+      setSteps(rows)
       setLoading(false)
     }
 
@@ -52,44 +89,68 @@ export default function UnderperformingPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <AlertTriangle size={20} className="text-amber-500" />
-        <h1 className="font-mono text-xl font-semibold text-slate-100">
-          Underperforming Steps
-        </h1>
-      </div>
-
-      {loading && (
-        <p className="text-slate-400 font-sans text-sm">Loading...</p>
-      )}
+      <p
+        className="font-sans text-[13px] font-normal text-[#aaa] mb-6"
+        style={{ letterSpacing: '0.04em' }}
+      >
+        underperforming steps
+      </p>
 
       {error && (
-        <p className="text-red-400 font-sans text-sm">Error: {error}</p>
+        <p className="font-sans text-sm text-red-400">Error: {error}</p>
+      )}
+
+      {loading && (
+        <div className="space-y-2">
+          {['w-full', 'w-11/12', 'w-full', 'w-10/12', 'w-full'].map((w, i) => (
+            <div key={i} className={`h-10 bg-[#1c1c1c] rounded animate-pulse ${w}`} />
+          ))}
+        </div>
       )}
 
       {!loading && !error && steps.length === 0 && (
-        <p className="text-slate-400 font-sans text-sm">No underperforming steps found.</p>
+        <p className="font-sans text-sm text-[#555] py-8 text-center">No flagged steps found.</p>
       )}
 
       {!loading && !error && steps.length > 0 && (
-        <div className="border border-[#262626] rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-[#262626] bg-[#0f0f0f]">
-                <th className="text-left px-4 py-3 font-sans font-medium text-slate-400">
-                  Sequence
+              <tr className="bg-[#0a0a0a] border-b border-[#1c1c1c] sticky top-0">
+                <th className="text-left px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Sequence
+                  </span>
                 </th>
-                <th className="text-right px-4 py-3 font-sans font-medium text-slate-400">
-                  Step
+                <th className="text-right px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Step
+                  </span>
                 </th>
-                <th className="text-left px-4 py-3 font-sans font-medium text-slate-400">
-                  Type
+                <th className="text-left px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Type
+                  </span>
                 </th>
-                <th className="text-right px-4 py-3 font-sans font-medium text-slate-400">
-                  Reply Rate
+                <th className="text-left px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Intent
+                  </span>
                 </th>
-                <th className="text-right px-4 py-3 font-sans font-medium text-slate-400">
-                  Send Volume
+                <th className="text-left px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Flag
+                  </span>
+                </th>
+                <th className="text-right px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Reply Rate
+                  </span>
+                </th>
+                <th className="text-right px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    Send Volume
+                  </span>
                 </th>
               </tr>
             </thead>
@@ -98,27 +159,43 @@ export default function UnderperformingPage() {
                 <tr
                   key={step.step_id}
                   onClick={() => router.push(`/steps/${step.step_id}`)}
-                  className="border-b border-[#1a1a1a] hover:bg-[#0f0f0f] transition-colors duration-150 cursor-pointer"
+                  className={`border-b border-b-[#1a1a1a] cursor-pointer transition-colors duration-150 hover:bg-[#0f0f0f] ${
+                    step.flag_type !== 'none'
+                      ? 'bg-[#0d0606] border-l-2 border-l-[#f87171]'
+                      : ''
+                  }`}
                 >
-                  <td className="px-4 py-3">
-                    <div className="font-mono text-slate-100 text-xs">{step.sequence_id}</div>
-                    {step.sequence_name && (
-                      <div className="font-sans text-slate-400 text-xs mt-0.5">
-                        {step.sequence_name}
-                      </div>
-                    )}
+                  <td className="px-4 py-3.5">
+                    <div className="font-sans text-sm text-[#aaa]">
+                      {step.sequence_name ?? step.sequence_id}
+                    </div>
+                    <div
+                      className="font-mono text-[10px] text-[#333] mt-0.5"
+                      style={{ letterSpacing: '0.04em' }}
+                    >
+                      {step.sequence_id}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-mono text-slate-100">{step.step_number}</span>
+                  <td className="px-4 py-3.5 text-right">
+                    <span className="font-mono text-sm text-[#aaa]">{step.step_number}</span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="font-sans text-slate-300 text-xs">{step.step_type ?? '—'}</span>
+                  <td className="px-4 py-3.5">
+                    <span className="font-sans text-xs text-[#555]">{step.step_type ?? '—'}</span>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-mono text-amber-500">{fmt(step.reply_rate)}</span>
+                  <td className="px-4 py-3.5">
+                    {step.step_intent
+                      ? <IntentPill>{step.step_intent}</IntentPill>
+                      : <span className="font-mono text-[10px] text-[#333]">—</span>
+                    }
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-mono text-slate-100">{step.send_volume.toLocaleString()}</span>
+                  <td className="px-4 py-3.5">
+                    <FlagPill type={step.flag_type} />
+                  </td>
+                  <td className="px-4 py-3.5 text-right">
+                    <span className="font-mono text-sm text-[#f87171]">{fmt(step.reply_rate)}</span>
+                  </td>
+                  <td className="px-4 py-3.5 text-right">
+                    <span className="font-mono text-sm text-[#aaa]">{step.send_volume.toLocaleString()}</span>
                   </td>
                 </tr>
               ))}

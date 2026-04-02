@@ -74,7 +74,7 @@ Respond with a JSON object containing exactly these five keys:
 
 4. "confidence": One of "low", "medium", or "high". Base this on how much data you have to work with — "high" when metrics clearly point to a fixable issue and the persona context is rich, "low" when data is sparse or the problem is ambiguous.
 
-5. "explanation": Plain English written for a manager. Explain what changed between the original and the rewrite, which selling principle drove each specific change, and why it should perform better. No jargon. Example tone: "The original subject line gives a CISO no reason to open it. The rewrite leads with a board-level compliance pressure that's top of mind right now, which is why it's more likely to get opened."
+5. "explanation": Bullet points only. Maximum 3 bullets. Each bullet is one sentence. No prose paragraphs. Written for a rep.
 
 Respond with raw JSON only — no markdown fences.`
 }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 1500,
+    max_tokens: 1200,
     messages: [{ role: 'user', content: prompt }],
   })
 
