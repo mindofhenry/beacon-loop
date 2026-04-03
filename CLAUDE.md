@@ -156,6 +156,11 @@ If the Railway CLI loses the service link, re-run: `railway service beacon-loop`
 **Key join:** `step_touchpoints.contact_email` → Salesforce contact email →
 `opportunity_id` via OpportunityContactRole.
 
+**Key columns added by 006_messaging_theme.sql:**
+- `sequence_steps.messaging_theme` — Claude-classified theme tag (pain_point, social_proof, value_add, trigger_event, breakup)
+- `sequence_steps.messaging_theme_classified_at` — when the classification ran
+- `step_performance.messaging_theme` — passthrough from sequence_steps for dashboard charts
+
 ## Environment Variables
 
 Required in `.env` (never read or output this file):
@@ -179,6 +184,9 @@ python pipeline/attribution_model.py
 python pipeline/generators/outreach_generator.py
 python pipeline/generators/salesloft_generator.py
 python pipeline/generators/generate_salesforce.py
+
+# Classify messaging themes (run BEFORE attribution_model.py)
+python pipeline/classify_messaging_theme.py
 
 # Start the MCP server locally
 python mcp_server/server.py

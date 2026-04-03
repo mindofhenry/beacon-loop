@@ -100,6 +100,12 @@ def load_intent_thresholds(sb: Client) -> dict[str, float | None]:
     return {row["intent_type"]: row["threshold_multiplier"] for row in resp.data}
 
 
+def load_messaging_themes(sb: Client) -> dict[str, str | None]:
+    """Load step_id -> messaging_theme from sequence_steps."""
+    resp = sb.table("sequence_steps").select("step_id, messaging_theme").execute()
+    return {row["step_id"]: row.get("messaging_theme") for row in resp.data}
+
+
 # ---------------------------------------------------------------------------
 # 2. Data loading
 # ---------------------------------------------------------------------------
@@ -407,6 +413,7 @@ def calculate_step_performance(
     intent_thresholds: dict[str, float | None],
     step_content: dict[str, dict],
     seq_max_steps: dict[tuple[str, str], int],
+    messaging_themes: dict[str, str | None] | None = None,
 ) -> pd.DataFrame:
     """Group touchpoints by step and calculate performance metrics.
 
@@ -590,6 +597,7 @@ def calculate_step_performance(
             "flag_confidence": flag_confidence,
             "credible_interval_upper": ci_upper,
             "credible_interval_lower": ci_lower,
+            "messaging_theme": (messaging_themes or {}).get(str(step_id)),
         })
 
     return pd.DataFrame(snapshots)
@@ -763,16 +771,9 @@ def write_snapshots(sb: Client, snapshots_df: pd.DataFrame) -> int:
         if r.get("health_gate_override") is not None:
             r["health_gate_override"] = bool(r["health_gate_override"])
         # Convert numpy/pandas NaN to None for JSON serialization
-        for col in (
-            "position_expected_rate", "intent_threshold_multiplier",
-            "bayesian_reply_rate", "bayesian_meeting_rate", "bayesian_opp_rate",
-            "health_score_v2", "flag_confidence",
-            "credible_interval_upper", "credible_interval_lower",
-        ):
-            if col in r and r[col] is not None:
-                val = r[col]
-                if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
-                    r[col] = None
+        for col, val in r.items():
+            if val is not None and isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                r[col] = None
 
     BATCH = 500
     written = 0
@@ -865,6 +866,10 @@ def main() -> None:
         intent_thresholds = load_intent_thresholds(sb)
         print(f"[attribution_model] Intent thresholds loaded: {len(intent_thresholds)} types")
 
+        messaging_themes = load_messaging_themes(sb)
+        themed = sum(1 for v in messaging_themes.values() if v is not None)
+        print(f"[attribution_model] Messaging themes loaded: {themed}/{len(messaging_themes)} steps classified")
+
         # Step 2: Load data
         if DEMO_MODE:
             print("[attribution_model] Loading from synthetic CSVs/JSON...")
@@ -889,6 +894,7 @@ def main() -> None:
         snapshots_df = calculate_step_performance(
             touchpoints_df, config, run_id,
             intent_thresholds, step_content, seq_max_steps,
+            messaging_themes,
         )
         print(f"[attribution_model] Snapshots calculated: {len(snapshots_df)}")
 
