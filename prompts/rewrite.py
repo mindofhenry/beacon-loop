@@ -1,6 +1,6 @@
 """
 prompts/rewrite.py
-Canonical rewrite prompt for underperforming sequence steps.
+Rewrite prompt assembly and Claude API call for underperforming sequence steps.
 
 Used by:
 - mcp_server/server.py (get_rewrite_suggestion tool)
@@ -8,114 +8,197 @@ Used by:
 """
 
 import json
+import os
 import re
 from typing import Any
 
 import anthropic
 
+REWRITE_MODEL = os.environ.get("REWRITE_MODEL", "claude-sonnet-4-6")
 
-def build_rewrite_prompt(step: dict[str, Any], persona: dict[str, Any]) -> str:
-    """Build the rewrite prompt from step metrics and persona config.
+_SYSTEM_HEADER = """You are Beacon Loop's rewrite engine. Your role is to diagnose underperforming sales email steps and produce methodology-grounded, persona-aware rewrites.
 
-    Returns the prompt string ready to send to Claude.
+Apply the invariant rules, failure mode framework, methodology selection matrix, and persona guidance below. Every rewrite must comply with Part 1 rules before any other optimization is applied."""
+
+
+def build_system_prompt(routed: dict) -> str:
+    """Build the full system prompt from routed knowledge base sections.
+
+    Args:
+        routed: dict returned by classifier.router.route()
+
+    Returns:
+        Single string — the system prompt for the Claude API call.
     """
-    pain_points_str = ", ".join(persona.get("pain_points") or [])
-    flag_reasons_str = (
-        "\n  - ".join(step["flag_reasons"])
-        if step.get("flag_reasons")
-        else "health score below threshold"
-    )
+    section_contents = [s["content"] for s in routed["system_prompt_sections"]]
+    return _SYSTEM_HEADER + "\n\n" + "\n\n".join(section_contents)
 
-    return f"""You are an expert B2B sales email copywriter analyzing an underperforming outbound sequence step.
 
-## Step Metrics
-- Source: {step["source"]}
-- Sequence: {step["sequence_name"]} (ID: {step["sequence_id"]})
-- Step: #{step["step_number"]} ({step["step_type"]})
-- Send volume: {step["send_volume"]}
-- Open rate: {float(step["open_rate"]):.1%}
-- Reply rate: {float(step["reply_rate"]):.1%}
-- Meeting rate: {float(step["meeting_rate"]):.1%}
-- Health score: {float(step.get("health_score_v2", step.get("health_score", 0))):.3f} / 1.000
-- Step intent: {step.get("step_intent", "unknown")}
-- Position expected rate: {f'{float(step["position_expected_rate"]):.2%}' if step.get("position_expected_rate") is not None else 'N/A'}
-- Bayesian reply rate: {f'{float(step["bayesian_reply_rate"]):.2%}' if step.get("bayesian_reply_rate") is not None else 'N/A'}
-- Flag type: {step.get("flag_type", "none")}
+def build_user_message(
+    step_data: dict,
+    classifier_output: dict,
+    context: dict,
+) -> str:
+    """Build the structured user message for the rewrite request.
 
-## Why It's Flagged
-  - {flag_reasons_str}
+    Args:
+        step_data: dict with step_id, sequence_name, step_number, max_step_number,
+            open_rate, reply_rate, meeting_rate, subject, body_text
+        classifier_output: dict from post_classify()
+        context: dict with persona_name, deal_type, vertical, sequence_stage
 
-## Target Persona
-- Title: {persona.get("title", "unknown")}
-- Industry: {persona.get("industry", "unknown")}
-- Company size: {persona.get("company_size", "unknown")}
-- Pain points: {pain_points_str}
-- Tone: {persona.get("tone", "professional")}
-{f'- Additional context: {persona["extra_context"]}' if persona.get("extra_context") else ""}
+    Returns:
+        Structured string (not JSON) for the user message.
+    """
+    # Performance assessments from classifier
+    severity = classifier_output.get("severity", "LOW")
+    final_signal_class = classifier_output.get("final_signal_class", "NONE_DETECTED")
 
-## Selling Methodology — Apply ALL Five Principles
+    # Rate assessments — derive from classifier or compute simple labels
+    open_rate = step_data.get("open_rate", 0)
+    reply_rate = step_data.get("reply_rate", 0)
+    open_rate_assessment = _assess_rate("open", open_rate)
+    reply_rate_assessment = _assess_rate("reply", reply_rate)
 
-### 1. Sell to Pain
-Name the specific operational or business pain this persona experiences given their title, industry, and company stage. Do NOT pitch features. Start from their problem, not the product.
+    # Failure modes section
+    fms = classifier_output.get("detected_failure_modes", [])
+    if fms:
+        fm_lines = "\n".join(
+            f"- {fm['code']}: {fm['name']} ({fm['confidence']}) — {fm['rationale']}"
+            for fm in fms
+        )
+    else:
+        fm_lines = "- None detected via heuristics — perform your own diagnosis"
 
-### 2. Value-Based Framing
-Lead with what changes for the prospect as an outcome, not what the product does. Frame every benefit as a result they achieve.
+    subject = step_data.get("subject") or "No subject available"
+    body_text = step_data.get("body_text") or "No body text available"
+    vertical = context.get("vertical") or "unspecified"
 
-### 3. Why You (Relevance)
-Make relevance to this specific persona and company context explicit. Use the title "{persona.get("title", "unknown")}" at a {persona.get("company_size", "unknown")} {persona.get("industry", "unknown")} company to ground the copy in their world. Reference challenges specific to their role and scale.
+    return f"""## Step Being Analyzed
+Sequence: {step_data.get("sequence_name", "unknown")}
+Step: {step_data.get("step_number", "?")} of {step_data.get("max_step_number", "?")} ({context.get("sequence_stage", "unknown")})
+Persona: {context.get("persona_name", "unknown")} | Deal type: {context.get("deal_type", "unknown")} | Vertical: {vertical}
 
-### 4. Why Now (Timing)
-Anchor to a timely reason to act. Based on the persona's industry ({persona.get("industry", "unknown")}), role ({persona.get("title", "unknown")}), and company size ({persona.get("company_size", "unknown")}), infer the most relevant timing signal — e.g. budget cycles, quarterly planning, hiring surges, regulatory deadlines, competitive pressure, or seasonal patterns.
+## Performance Data
+Open rate: {open_rate:.1%} ({open_rate_assessment})
+Reply rate: {reply_rate:.1%} ({reply_rate_assessment})
+Meeting rate: {step_data.get("meeting_rate", 0):.1%}
+Severity: {severity}
+Signal class: {final_signal_class}
 
-### 5. Anti-Template Test
-If the subject line or opening line could apply to 1,000 companies without changing a word, it fails. Rewrite until it can't. Every line must feel written for THIS persona at THIS type of company.
+## Detected Failure Modes
+{fm_lines}
 
-## Your Task
-Respond with a JSON object containing exactly these five keys:
+## Current Step Copy
+Subject: {subject}
+Body:
+{body_text}
 
-1. "diagnosis": 1-2 sentences maximum. State what metric is failing and the single most likely root cause. No elaboration.
-
-2. "suggested_subject": A single revised subject line optimized for this persona. Must pass the anti-template test.
-
-3. "suggested_body": A revised email body (plain text, 3-5 sentences, no placeholders except {{{{first_name}}}} and {{{{company}}}}). Must lead with pain, frame value as outcomes, and include a timing hook.
-
-4. "confidence": One of "low", "medium", or "high". Base this on how much data you have to work with — "high" when metrics clearly point to a fixable issue and the persona context is rich, "low" when data is sparse or the problem is ambiguous.
-
-5. "explanation": Bullet points only. Maximum 3 bullets. Each bullet is one sentence. No prose paragraphs. Written for a rep.
-
-Respond with raw JSON only — no markdown fences."""
+## Required Output Format
+Respond with a JSON object containing exactly these keys:
+- "diagnosis": string — which failure mode(s) you diagnosed and why, grounded in the copy and performance data
+- "methodology_used": string — which methodology governs this rewrite and why
+- "rewrite_directions": array of strings — the named directions from Part 4 you applied
+- "suggested_subject": string — rewritten subject line
+- "suggested_body": string — rewritten email body. Preserve any template variables ({{first_name}}, {{{{company}}}}, etc.) exactly as they appear.
+- "confidence": string — "HIGH", "MEDIUM", or "LOW"
+- "explanation": string — diff-style explanation of every major change made and why"""
 
 
 def generate_rewrite(
-    step: dict[str, Any],
-    persona: dict[str, Any],
-    api_key: str,
-) -> dict[str, str]:
-    """Call Claude with the rewrite prompt and return parsed result.
+    step_data: dict,
+    classifier_output: dict,
+    context: dict,
+    routed: dict,
+) -> dict[str, Any]:
+    """Call Claude with the assembled system + user prompt and return parsed result.
 
-    Returns dict with keys: diagnosis, suggested_subject, suggested_body,
-    confidence, explanation.
+    Args:
+        step_data: dict with step metrics and copy
+        classifier_output: dict from post_classify()
+        context: dict with persona_name, deal_type, vertical, sequence_stage
+        routed: dict from classifier.router.route()
+
+    Returns:
+        dict with 7 output keys plus model_used, token_estimate, routing_log.
+        On parse failure: dict with error=True, raw_response, and other keys as None.
     """
-    prompt = build_rewrite_prompt(step, persona)
+    system_prompt = build_system_prompt(routed)
+    user_message = build_user_message(step_data, classifier_output, context)
 
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1200,
-        messages=[{"role": "user", "content": prompt}],
+        model=REWRITE_MODEL,
+        max_tokens=1500,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
     )
     raw = message.content[0].text.strip()
 
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
+        # Strip markdown fences if present
         match = re.search(r"\{.*\}", raw, re.DOTALL)
-        parsed = json.loads(match.group()) if match else {"raw_response": raw}
+        if match:
+            try:
+                parsed = json.loads(match.group())
+            except json.JSONDecodeError:
+                parsed = None
+        else:
+            parsed = None
+
+    if parsed is None:
+        return {
+            "error": True,
+            "raw_response": raw,
+            "diagnosis": None,
+            "methodology_used": None,
+            "rewrite_directions": None,
+            "suggested_subject": None,
+            "suggested_body": None,
+            "confidence": None,
+            "explanation": None,
+            "model_used": REWRITE_MODEL,
+            "token_estimate": routed.get("token_estimate"),
+            "routing_log": routed.get("routing_log"),
+        }
 
     return {
         "diagnosis": parsed.get("diagnosis", ""),
+        "methodology_used": parsed.get("methodology_used", ""),
+        "rewrite_directions": parsed.get("rewrite_directions", []),
         "suggested_subject": parsed.get("suggested_subject", ""),
         "suggested_body": parsed.get("suggested_body", ""),
-        "confidence": parsed.get("confidence", "medium"),
+        "confidence": parsed.get("confidence", "MEDIUM"),
         "explanation": parsed.get("explanation", ""),
+        "model_used": REWRITE_MODEL,
+        "token_estimate": routed.get("token_estimate"),
+        "routing_log": routed.get("routing_log"),
     }
+
+
+def _assess_rate(metric: str, rate: float) -> str:
+    """Simple rate assessment label based on absolute benchmarks."""
+    if metric == "open":
+        if rate >= 0.50:
+            return "excellent"
+        if rate >= 0.35:
+            return "good"
+        if rate >= 0.27:
+            return "average"
+        if rate >= 0.20:
+            return "below_average"
+        return "below_flag"
+    if metric == "reply":
+        if rate >= 0.10:
+            return "excellent"
+        if rate >= 0.05:
+            return "good"
+        if rate >= 0.03:
+            return "average"
+        if rate >= 0.015:
+            return "below_average"
+        return "below_flag"
+    return "unknown"

@@ -8,6 +8,7 @@ Claude-powered rewrite suggestions for underperforming sequence steps.
 
 import os
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,16 @@ import psycopg2.extras
 from dotenv import load_dotenv
 from fastmcp import FastMCP
 import anthropic
+
+# Ensure repo root is importable for classifier / prompts / knowledge
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from classifier.performance import classify_performance
+from classifier.copy_analysis import analyze_copy
+from classifier.post_classify import post_classify
+from classifier.router import route
+from classifier.context_lookup import build_context
+from prompts.rewrite import generate_rewrite
 
 # ---------------------------------------------------------------------------
 # Bootstrap
@@ -226,10 +237,10 @@ def get_rewrite_suggestion(
     """
     Generate a Claude-powered diagnosis and rewrite for an underperforming step.
 
-    Looks up step metrics from step_performance and persona context from
-    persona_configs (defaults to the first persona if persona_config_id is omitted).
-    Calls claude-sonnet-4-6, stores the result in rewrite_suggestions, and
-    returns diagnosis, suggested_subject, and suggested_body.
+    Runs the full pipeline: fetch step metrics + copy, resolve persona via
+    sequence_persona_map, classify performance, analyze copy, post-classify,
+    route to knowledge base sections, then call Claude for a methodology-grounded
+    rewrite. Stores full diagnostic output in rewrite_suggestions.
     """
     conn = _db()
     try:
@@ -238,7 +249,7 @@ def get_rewrite_suggestion(
         if not latest:
             return {"error": "No pipeline data found"}
 
-        # Fetch step metrics — include new v1.2 columns for richer LLM context
+        # 1. Fetch step metrics from step_performance
         cur.execute(
             """
             SELECT source, sequence_id, sequence_name, step_id, step_number,
@@ -257,39 +268,89 @@ def get_rewrite_suggestion(
             return {"error": f"No step found with step_id={step_id!r} in latest run"}
         step = dict(step)
 
-        # Fetch persona
-        if persona_config_id:
-            cur.execute(
-                "SELECT * FROM persona_configs WHERE id = %s",
-                (persona_config_id,),
-            )
-        else:
-            cur.execute("SELECT * FROM persona_configs ORDER BY created_at LIMIT 1")
-        persona = cur.fetchone()
-        if not persona:
-            return {"error": "No persona_configs found — run the migration first"}
-        persona = dict(persona)
+        # 2. Fetch step copy from sequence_steps
+        cur.execute(
+            "SELECT subject, body_text FROM sequence_steps WHERE step_id = %s LIMIT 1",
+            (step_id,),
+        )
+        copy_row = cur.fetchone()
+        step_copy_subject = copy_row["subject"] if copy_row else None
+        step_copy_body = copy_row["body_text"] if copy_row else None
 
-        # Build prompt and call Claude via prompts/rewrite.py
-        import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-        from prompts.rewrite import generate_rewrite
+        # 3. Build context via sequence_persona_map
+        context = build_context(
+            step_row=step,
+            sequence_id=step["sequence_id"],
+            source=step["source"],
+            step_number=step["step_number"],
+            db_cursor=cur,
+            latest_date=latest,
+        )
 
-        result = generate_rewrite(step, persona, ANTHROPIC_API_KEY)
-        diagnosis = result["diagnosis"]
-        suggested_subject = result["suggested_subject"]
-        suggested_body = result["suggested_body"]
-        confidence = result["confidence"]
-        explanation = result["explanation"]
+        # 4. Compute sequence average reply rate
+        cur.execute(
+            """
+            SELECT AVG(reply_rate) AS avg_reply
+            FROM step_performance
+            WHERE sequence_id = %s AND source = %s AND snapshot_date = %s
+            """,
+            (step["sequence_id"], step["source"], latest),
+        )
+        avg_row = cur.fetchone()
+        seq_avg_reply = float(avg_row["avg_reply"]) if avg_row and avg_row["avg_reply"] else 0.0
 
-        # Persist to rewrite_suggestions
+        # 5. Run the pre-classifier pipeline
+        perf_result = classify_performance(
+            open_rate=float(step["open_rate"]),
+            reply_rate=float(step["reply_rate"]),
+            meeting_rate=float(step["meeting_rate"]),
+            sequence_avg_reply=seq_avg_reply,
+            step_number=step["step_number"],
+            max_step_number=context["max_step_number"],
+        )
+
+        copy_result = analyze_copy(
+            subject=step_copy_subject,
+            body_text=step_copy_body,
+            step_number=step["step_number"],
+            max_step_number=context["max_step_number"],
+        )
+
+        classifier_output = post_classify(perf_result, copy_result, context)
+        routed = route(classifier_output, context)
+
+        # 6. Build step_data for prompt assembly
+        step_data = {
+            "step_id": step["step_id"],
+            "sequence_name": step["sequence_name"],
+            "step_number": step["step_number"],
+            "max_step_number": context["max_step_number"],
+            "open_rate": float(step["open_rate"]),
+            "reply_rate": float(step["reply_rate"]),
+            "meeting_rate": float(step["meeting_rate"]),
+            "subject": step_copy_subject,
+            "body_text": step_copy_body,
+        }
+
+        # 7. Call Claude via the full prompt pipeline
+        result = generate_rewrite(step_data, classifier_output, context, routed)
+
+        # Resolve persona_config_id for storage
+        stored_persona_id = context.get("persona_config_id")
+        if not stored_persona_id and persona_config_id:
+            stored_persona_id = persona_config_id
+
+        # 8. Persist to rewrite_suggestions with new diagnostic columns
         cur.execute(
             """
             INSERT INTO rewrite_suggestions
                 (step_id, sequence_id, sequence_name, step_number,
                  persona_config_id, diagnosis, suggested_subject, suggested_body,
-                 confidence, explanation, model_used, pipeline_run_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 confidence, explanation, model_used, pipeline_run_id,
+                 failure_modes_detected, methodology_used, rewrite_directions,
+                 signal_class, step_copy_snapshot)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -297,30 +358,41 @@ def get_rewrite_suggestion(
                 step["sequence_id"],
                 step["sequence_name"],
                 step["step_number"],
-                persona["id"],
-                diagnosis,
-                suggested_subject,
-                suggested_body,
-                confidence,
-                explanation,
-                "claude-sonnet-4-6",
+                stored_persona_id,
+                result.get("diagnosis"),
+                result.get("suggested_subject"),
+                result.get("suggested_body"),
+                result.get("confidence"),
+                result.get("explanation"),
+                result.get("model_used", "claude-sonnet-4-6"),
                 step["pipeline_run_id"],
+                json.dumps(classifier_output["detected_failure_modes"]),
+                result.get("methodology_used"),
+                json.dumps(result.get("rewrite_directions", [])),
+                classifier_output["final_signal_class"],
+                json.dumps({"subject": step_copy_subject, "body": step_copy_body}),
             ),
         )
         conn.commit()
         suggestion_id = cur.fetchone()["id"]
 
+        # 9. Return full result
         return {
             "suggestion_id": str(suggestion_id),
             "step_id": step["step_id"],
             "sequence_name": step["sequence_name"],
             "step_number": step["step_number"],
-            "persona": persona["name"],
-            "diagnosis": diagnosis,
-            "suggested_subject": suggested_subject,
-            "suggested_body": suggested_body,
-            "confidence": confidence,
-            "explanation": explanation,
+            "persona": context["persona_name"],
+            "diagnosis": result.get("diagnosis"),
+            "methodology_used": result.get("methodology_used"),
+            "rewrite_directions": result.get("rewrite_directions"),
+            "suggested_subject": result.get("suggested_subject"),
+            "suggested_body": result.get("suggested_body"),
+            "confidence": result.get("confidence"),
+            "explanation": result.get("explanation"),
+            "signal_class": classifier_output["final_signal_class"],
+            "failure_modes": classifier_output["detected_failure_modes"],
+            "token_estimate": routed.get("token_estimate"),
         }
     finally:
         conn.close()

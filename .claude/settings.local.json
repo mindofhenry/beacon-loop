@@ -101,7 +101,10 @@
       "Bash(npx next:*)",
       "Bash(pipeline\\\\.venv\\\\Scripts\\\\python.exe pipeline\\\\generators\\\\outreach_generator.py)",
       "Bash(PYTHONIOENCODING=utf-8 pipeline/.venv/Scripts/python.exe pipeline/validate_attribution.py)",
-      "Bash(python pipeline/backfill_step_copy.py)"
+      "Bash(python pipeline/backfill_step_copy.py)",
+      "Bash(python scripts/live_rewrite_test.py)",
+      "Bash(python scripts/test_mcp_handler.py)",
+      "Bash(python scripts/test_all_tools.py)"
     ]
   },
   "enableAllProjectMcpServers": true,

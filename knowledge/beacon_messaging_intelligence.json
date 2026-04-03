@@ -1,0 +1,776 @@
+{
+  "meta": {
+    "version": "1.0",
+    "source_line_count": 407,
+    "part_count": 10
+  },
+  "part_1_invariant_rules": {
+    "rules": [
+      {
+        "rule": "Email length",
+        "threshold": "Hard flag >100 words; soft flag >75 words",
+        "source": "Gong 28M+, Lavender, Instantly 2026"
+      },
+      {
+        "rule": "Subject line length",
+        "threshold": "Flag >7 words; optimal is 2 words",
+        "source": "Lavender, Gong 85M+"
+      },
+      {
+        "rule": "Reading level",
+        "threshold": "Flag above 6th grade; target 3rd–5th grade = 67% more replies",
+        "source": "Lavender"
+      },
+      {
+        "rule": "CTA count",
+        "threshold": "Exactly one per email; flag any email with >1 ask",
+        "source": "Gong 304K study, Mixmax"
+      },
+      {
+        "rule": "I/We ratio",
+        "threshold": "Flag if >40% of sentences start with \"I\" or \"We\"",
+        "source": "Lavender, Gong"
+      },
+      {
+        "rule": "Opening line",
+        "threshold": "Flag any email opening with sender's name, company, or role",
+        "source": "Lavender, Coleman, Braun"
+      },
+      {
+        "rule": "Personalization",
+        "threshold": "Flag any \"personalized\" element not connected to a business challenge",
+        "source": "Lavender, Allred"
+      },
+      {
+        "rule": "Follow-up freshness",
+        "threshold": "Flag any follow-up that doesn't introduce new angle, data, or resource",
+        "source": "Cegelski, Farrokh"
+      },
+      {
+        "rule": "Social proof specificity",
+        "threshold": "Flag vague claims (\"hundreds of companies\"); require named company + specific metric",
+        "source": "Gong, Bay"
+      },
+      {
+        "rule": "Mobile formatting",
+        "threshold": "Flag single-block paragraphs >2 sentences; require whitespace",
+        "source": "Lavender (8× mobile open rate)"
+      }
+    ]
+  },
+  "part_2_failure_modes": {
+    "fm1_feature_led_opening": {
+      "data_signal": "Reply rate low, open rate acceptable (email opened but ignored)",
+      "copy_signal": "Opening sentence subject is \"We\" or \"Our\"; bullet points of features/capabilities; buzzword clusters (\"AI-powered,\" \"scalable,\" \"platform,\" \"cutting-edge\"); fixed pitch block after personalized opener",
+      "rewrite_direction": "Problem Prompter — open with observation about prospect's world → peer company faced X → status quo → new perspective → soft CTA. Replace every buzzword with a specific quantified outcome."
+    },
+    "fm2_fake_personalization": {
+      "data_signal": "Reply rate far below personalization benchmark (genuine personalization = 50–250% lift; fake = zero lift); campaign size >1,000 recipients with <3% reply",
+      "copy_signal": "Compliment disconnected from pitch (\"Congrats on the funding!\"); vague observations applicable to anyone; {{first_name}}/{{company}} as only personalization; no observable connection between personal opener and the problem being raised",
+      "rewrite_direction": "Observation → Challenge framework. Every personalized element must connect to a likely business challenge. One strong specific signal beats three vague ones. Sources: LinkedIn activity, hiring patterns, BuiltWith, G2 reviews, CEO commentary."
+    },
+    "fm3_wrong_persona_targeting": {
+      "data_signal": "All KPIs degrade simultaneously; open rate <15%; A/B testing different copy yields uniformly poor results",
+      "copy_signal": "Pain points belong to a different role; technical jargon to business buyer or ROI language to engineer; pitch could be sent unchanged to any title at the company; problems the recipient doesn't own",
+      "rewrite_direction": "Rebuild from persona profile — recalibrate pain language, tone, seniority register, and CTA to the actual recipient's role. Apply the gut check: \"Could this message be sent to 10,000 other people? If yes, rewrite it.\""
+    },
+    "fm4_cta_overload": {
+      "data_signal": "Low meeting-book rate even from positive replies; confused or non-committal responses",
+      "copy_signal": "More than one question in the email; multiple links; \"or\" constructions presenting choices; asks that require more than one decision",
+      "rewrite_direction": "Compress to single softest-appropriate CTA for the sequence stage. First touch: interest check question. Follow-up 2+: soft ask. Late stage: direct meeting ask. Remove all secondary links and questions."
+    },
+    "fm5_too_long_too_dense": {
+      "data_signal": "Reply rate well below benchmark; high mobile non-response rate",
+      "copy_signal": "Word count >100; single-block paragraphs; sentence complexity above 6th grade; information density requires active reading rather than scanning",
+      "rewrite_direction": "Compress to 25–75 words for first touch. Break into 2–3 paragraphs of 1–2 sentences each. Cut every sentence that doesn't advance the one message. Rewrite for 5th grade reading level."
+    },
+    "fm6_too_vague_too_safe": {
+      "data_signal": "Open rate fine; reply rate near zero; no emotional or intellectual reaction from prospect",
+      "copy_signal": "No specific claim made; no tension or challenge to current thinking; language applicable to any company in any industry; avoids any assertion that could be wrong or disputed",
+      "rewrite_direction": "Inject a Challenger-style commercial insight — a specific data point, a counterintuitive observation, or a peer benchmark that creates constructive tension. Something specific enough to be wrong for some readers is specific enough to be right for others."
+    },
+    "fm7_methodology_mismatch": {
+      "data_signal": "Reply rate poor despite copy quality; pattern visible when persona × methodology combination is analyzed",
+      "copy_signal": "Challenger reframe directed at risk-averse CFO in cost-cutting mode; Sandler negative reverse sent to an IC who needs hand-holding; aggressive urgency tactics sent to an empathy-driven HR buyer; fear-based security messaging (FUD) sent to a sophisticated CISO",
+      "rewrite_direction": "Apply the methodology decision tree (Part 3) to select the correct framework for the persona × deal complexity × sequence stage combination. Rebuild structure accordingly."
+    },
+    "fm8_buying_stage_mismatch": {
+      "data_signal": "Reply rate poor even with relevant personas; meeting book rate low from positive replies",
+      "copy_signal": "Solution-stage messaging (demo request, pricing, features) directed at problem-unaware prospects; same message regardless of prior engagement history; no adaptation to buyer's awareness level",
+      "rewrite_direction": "For unaware buyers: insight-led, create a knowledge gap. For problem-aware: validation and cost-of-inaction framing. For solution-aware: differentiation and social proof. Recalibrate CTA to match awareness level."
+    },
+    "fm9_breakup_without_tension": {
+      "data_signal": "Final-step reply rate near zero; no psychological consequence to ignoring",
+      "copy_signal": "No real consequence stated; soft language (\"I'll stop reaching out\"); no call to action that requires a decision; tone indistinguishable from prior follow-ups",
+      "rewrite_direction": "Apply Sandler \"going for the no\" — explicitly state this is the last outreach, give permission to say no, create a genuine decision point. Best performing breakup structure: acknowledge lack of response → assume it's not a priority → explicitly close the file → leave door open without begging."
+    },
+    "fm10_subject_body_misalignment": {
+      "data_signal": "High open rate but very low reply rate (subject got click; body lost them immediately)",
+      "copy_signal": "Subject line creates expectations body doesn't fulfill; clickbait subject with consultative body; salesy subject with problem-led body",
+      "rewrite_direction": "Decision — if body is strong, rewrite subject to match using Lavender's \"to-do list item\" / \"internal camouflage\" format. If subject got strong opens, rewrite body to deliver on the subject's implied promise."
+    }
+  },
+  "part_3_methodology": {
+    "primary_matrix": [
+      {
+        "persona_tier": "C-suite (CEO, CRO, CFO, CISO)",
+        "deal_type": "Enterprise / Complex",
+        "sequence_stage": "First touch",
+        "primary_method": "Challenger",
+        "secondary": "MEDDPICC"
+      },
+      {
+        "persona_tier": "C-suite",
+        "deal_type": "Mid-market",
+        "sequence_stage": "First touch",
+        "primary_method": "Challenger",
+        "secondary": "Command of the Message"
+      },
+      {
+        "persona_tier": "C-suite",
+        "deal_type": "SMB",
+        "sequence_stage": "First touch",
+        "primary_method": "SNAP",
+        "secondary": "Gap Selling"
+      },
+      {
+        "persona_tier": "VP / Director",
+        "deal_type": "Enterprise",
+        "sequence_stage": "First touch",
+        "primary_method": "Challenger",
+        "secondary": "Value Selling"
+      },
+      {
+        "persona_tier": "VP / Director",
+        "deal_type": "Mid-market",
+        "sequence_stage": "First touch",
+        "primary_method": "Gap Selling",
+        "secondary": "Challenger"
+      },
+      {
+        "persona_tier": "VP / Director",
+        "deal_type": "Any",
+        "sequence_stage": "Follow-up",
+        "primary_method": "Science of Selling",
+        "secondary": null
+      },
+      {
+        "persona_tier": "Manager / IC",
+        "deal_type": "Any deal type",
+        "sequence_stage": "First touch",
+        "primary_method": "SPIN (problem hypothesis)",
+        "secondary": "Sandler"
+      },
+      {
+        "persona_tier": "Manager / IC",
+        "deal_type": "Any",
+        "sequence_stage": "Follow-up",
+        "primary_method": "Sandler (negative reverse)",
+        "secondary": null
+      },
+      {
+        "persona_tier": "RevOps / GTM Ops",
+        "deal_type": "Any",
+        "sequence_stage": "Any",
+        "primary_method": "Value Selling + MEDDPICC",
+        "secondary": null
+      },
+      {
+        "persona_tier": "CISO / Security",
+        "deal_type": "Enterprise",
+        "sequence_stage": "Any",
+        "primary_method": "MEDDPICC + Challenger",
+        "secondary": null
+      },
+      {
+        "persona_tier": "CFO / Finance",
+        "deal_type": "Any",
+        "sequence_stage": "Any",
+        "primary_method": "Science of Selling + Value Selling",
+        "secondary": null
+      },
+      {
+        "persona_tier": "HR / People Ops",
+        "deal_type": "Any",
+        "sequence_stage": "Any",
+        "primary_method": "Consultative / SPIN",
+        "secondary": null
+      },
+      {
+        "persona_tier": "Procurement",
+        "deal_type": "Any",
+        "sequence_stage": "Any",
+        "primary_method": "Consultative transparency",
+        "secondary": null
+      },
+      {
+        "persona_tier": "Technical (CTO, Eng)",
+        "deal_type": "Any",
+        "sequence_stage": "First touch",
+        "primary_method": "Content-led / SNAP",
+        "secondary": null
+      }
+    ],
+    "stage_modifiers": {
+      "first_touch": "Lead with the insight or problem hypothesis. Never pitch the product. CTA = interest check only.",
+      "follow_up_early": "New angle, new evidence. Apply Sandler negative reverse if no response. Begin layering social proof.",
+      "follow_up_late": "Rational drowning (cost of inaction). Peer benchmarks. Sharper CTA.",
+      "breakup": "Sandler \"going for the no.\" Genuine consequence. Last door open without begging."
+    }
+  },
+  "part_4_rewrite_directions": {
+    "problem_flip": {
+      "name": "Problem Flip",
+      "when_to_use": "Feature-led opening",
+      "structure": "Rewrite to open with prospect's observable problem, not seller's product",
+      "constraints": ""
+    },
+    "compression": {
+      "name": "Compression",
+      "when_to_use": ">100 words or dense paragraphs",
+      "structure": "Cut to 25–75 words; 1–2 sentence paragraphs; 5th grade reading level",
+      "constraints": ""
+    },
+    "challenger_reframe": {
+      "name": "Challenger Reframe",
+      "when_to_use": "No insight, no tension, vague messaging",
+      "structure": "Insert commercial teaching insight — specific data point that challenges current thinking",
+      "constraints": ""
+    },
+    "sandler_reverse": {
+      "name": "Sandler Reverse",
+      "when_to_use": "Follow-ups with no response; breakup step",
+      "structure": "Apply negative reverse framing; \"going for the no\"; permission to disengage",
+      "constraints": ""
+    },
+    "persona_recalibration": {
+      "name": "Persona Recalibration",
+      "when_to_use": "Wrong tone/register for recipient seniority",
+      "structure": "Rebuild pain language, tone, and CTA for actual persona tier",
+      "constraints": ""
+    },
+    "cta_simplification": {
+      "name": "CTA Simplification",
+      "when_to_use": "Multiple asks, decision paralysis",
+      "structure": "Reduce to single softest-appropriate CTA for stage",
+      "constraints": ""
+    },
+    "social_proof_injection": {
+      "name": "Social Proof Injection",
+      "when_to_use": "Vague claims, skeptical persona, no credibility markers",
+      "structure": "Add named company + specific metric + relevant to prospect's context",
+      "constraints": ""
+    },
+    "stage_realignment": {
+      "name": "Stage Realignment",
+      "when_to_use": "Solution pitch to unaware buyer",
+      "structure": "Shift to insight-led (unaware), validation (problem-aware), or differentiation (solution-aware)",
+      "constraints": ""
+    },
+    "subject_alignment": {
+      "name": "Subject Alignment",
+      "when_to_use": "High open / low reply mismatch",
+      "structure": "Rewrite subject to match body using \"internal camouflage\" format OR rewrite body to deliver on subject promise",
+      "constraints": ""
+    },
+    "personalization_repair": {
+      "name": "Personalization Repair",
+      "when_to_use": "Decorative personalization disconnected from pitch",
+      "structure": "Reconnect observation to business challenge via Observation → Challenge framework",
+      "constraints": ""
+    },
+    "breakup_sharpening": {
+      "name": "Breakup Sharpening",
+      "when_to_use": "Weak final-step with no tension",
+      "structure": "Apply Sandler breakup structure — state consequence, give permission to say no, close file",
+      "constraints": ""
+    },
+    "methodology_swap": {
+      "name": "Methodology Swap",
+      "when_to_use": "Framework mismatched to persona/deal",
+      "structure": "Rebuild structure per decision tree selection",
+      "constraints": ""
+    },
+    "vertical_pain_injection": {
+      "name": "Vertical Pain Injection",
+      "when_to_use": "Generic pain language not specific to industry",
+      "structure": "Replace with vertical-specific pain language, compliance references, or industry benchmarks",
+      "constraints": ""
+    },
+    "timing_pivot": {
+      "name": "Timing Pivot",
+      "when_to_use": "Ignores buyer's current calendar context",
+      "structure": "Reframe angle, urgency, and hook for buyer's active timing context (EoQ, new exec, post-funding, etc.)",
+      "constraints": ""
+    },
+    "followup_fresh_angle": {
+      "name": "Follow-up Fresh Angle",
+      "when_to_use": "\"Just checking in\" or repetitive bump",
+      "structure": "Replace with new data point, case study, or problem angle; new subject line; no reference to prior bump",
+      "constraints": ""
+    }
+  },
+  "part_5_personas": {
+    "ceo_founder": {
+      "title": "CEO / Founder (SMB/Mid-market)",
+      "tier": "c_suite",
+      "pain_points": [
+        "revenue growth",
+        "competitive moat",
+        "team efficiency",
+        "existential risk"
+      ],
+      "tone": "Peer-to-peer, direct, no fluff",
+      "what_works": "Challenger (insight-led), referral path (Predictable Revenue); CTA: Soft question, never calendar link on first touch",
+      "what_doesnt": "Feature lists, ROI calculators, anything that reads like a vendor pitch"
+    },
+    "cfo_finance": {
+      "title": "CFO / Finance Buyer",
+      "tier": "c_suite",
+      "pain_points": [
+        "cost reduction",
+        "risk mitigation",
+        "ROI",
+        "budget control",
+        "compliance"
+      ],
+      "tone": "Formal, data-driven, numbers in subject line work",
+      "what_works": "Science of Selling, Value Selling; CTA: Specific ROI conversation ask",
+      "what_doesnt": "Vague claims, emotional appeals, \"innovative\" / \"cutting-edge\" language"
+    },
+    "cro_vp_sales": {
+      "title": "CRO / VP Sales",
+      "tier": "c_suite",
+      "pain_points": [
+        "quota attainment",
+        "pipeline coverage",
+        "rep ramp time",
+        "forecast accuracy"
+      ],
+      "tone": "Peer-to-peer, metrics-driven, urgency-aware",
+      "what_works": "Challenger (peer benchmarking), Gap Selling; CTA: Hard ask acceptable after social proof established",
+      "what_doesnt": "Long explanations, feature walkthroughs, academic framing"
+    },
+    "ciso_security": {
+      "title": "CISO / Security Buyer",
+      "tier": "c_suite",
+      "pain_points": [
+        "MTTD",
+        "MTTR",
+        "false positives",
+        "compliance (HIPAA, PCI DSS, SOC 2, NIS2)",
+        "analyst burnout",
+        "attack surface"
+      ],
+      "tone": "Technical, peer-level, zero FUD",
+      "what_works": "MEDDPICC + Challenger; CTA: Resource offer, not meeting request on first touch",
+      "what_doesnt": "\"Next-gen,\" \"AI-powered,\" cold calls, FUD, generic \"security posture\" language"
+    },
+    "cmo_vp_marketing": {
+      "title": "CMO / VP Marketing",
+      "tier": "c_suite",
+      "pain_points": [
+        "pipeline contribution",
+        "brand",
+        "campaign performance",
+        "attribution"
+      ],
+      "tone": "Strategic, creative, outcome-focused",
+      "what_works": "Challenger, Gap Selling; CTA: Strategic conversation, not product demo",
+      "what_doesnt": "Tactical/operational framing, technical jargon"
+    },
+    "cto_vp_engineering": {
+      "title": "CTO / VP Engineering",
+      "tier": "c_suite",
+      "pain_points": [
+        "system reliability",
+        "developer velocity",
+        "technical debt",
+        "scalability",
+        "security"
+      ],
+      "tone": "Technical, peer-level, plain text only",
+      "what_works": "Content-led, SNAP; CTA: Technical resource offer, architectural conversation",
+      "what_doesnt": "Business jargon, ROI-first framing, HTML emails"
+    },
+    "vp_director": {
+      "title": "VP / Director (any function)",
+      "tier": "mid_level",
+      "pain_points": [
+        "team performance",
+        "budget",
+        "cross-functional alignment",
+        "career impact"
+      ],
+      "tone": "Professional, peer-aware, outcome-focused",
+      "what_works": "Challenger, Value Selling; CTA: Peer benchmark conversation, low-commitment ask",
+      "what_doesnt": ""
+    },
+    "revops_gtm_ops": {
+      "title": "RevOps / GTM Ops",
+      "tier": "mid_level",
+      "pain_points": [
+        "data integrity",
+        "system integration",
+        "process efficiency",
+        "attribution",
+        "tooling ROI"
+      ],
+      "tone": "Technical-operational, no-nonsense",
+      "what_works": "Value Selling + MEDDPICC; CTA: Operational impact conversation, free audit/assessment",
+      "what_doesnt": "Sales-y language; they recognize and reject it immediately"
+    },
+    "manager_team_lead": {
+      "title": "Manager / Team Lead",
+      "tier": "mid_level",
+      "pain_points": [
+        "team output",
+        "day-to-day friction reduction",
+        "hitting targets"
+      ],
+      "tone": "Empathetic, practical, direct",
+      "what_works": "Gap Selling, SPIN; CTA: Problem-validation question",
+      "what_doesnt": ""
+    },
+    "hr_people_ops": {
+      "title": "HR / People Ops",
+      "tier": "mid_level",
+      "pain_points": [
+        "retention",
+        "time-to-hire",
+        "compliance",
+        "employee experience",
+        "DEI",
+        "culture"
+      ],
+      "tone": "Warm, empathetic, professional — not transactional",
+      "what_works": "Consultative / SPIN; CTA: Resource offer, free playbook, non-committal",
+      "what_doesnt": "Aggressive urgency, cost-only framing, \"I noticed you're hiring\" without insight tie"
+    },
+    "individual_contributor": {
+      "title": "Individual Contributor / End User",
+      "tier": "mid_level",
+      "pain_points": [
+        "daily friction",
+        "making their job easier",
+        "not getting in trouble"
+      ],
+      "tone": "Casual, direct, peer-level",
+      "what_works": "SNAP (Simple, iNvaluable, Aligned, Priority); CTA: Free resource, not a meeting",
+      "what_doesnt": "Business outcomes framing, C-suite language"
+    },
+    "procurement_legal": {
+      "title": "Procurement / Legal",
+      "tier": "mid_level",
+      "pain_points": [
+        "risk mitigation",
+        "compliance",
+        "cost",
+        "contract terms",
+        "vendor management"
+      ],
+      "tone": "Professional, transparent, consultative",
+      "what_works": "Consultative transparency; CTA: Offer to send compliance docs, pricing comparison, SOC 2 report",
+      "what_doesnt": "Cold calls (do not call), manipulation tactics, repeated follow-ups to no-reply, \"Seller 101\" moves"
+    }
+  },
+  "part_6_verticals": {
+    "security_saas": {
+      "name": "Security SaaS",
+      "buyer_priorities": "SOC Manager / Dir SecOps",
+      "language_that_works": "Alert fatigue, false positives, MTTD/MTTR, SOC burnout, attack surface expansion, compliance deadlines (SOC 2, NIS2, DORA, PCI DSS, HIPAA), analyst hours wasted, breach cost quantification",
+      "avoid": "\"Next-gen,\" \"AI-powered,\" \"best-in-class,\" generic \"security posture,\" FUD without context"
+    },
+    "devtools": {
+      "name": "DevTools",
+      "buyer_priorities": "IC / Engineer",
+      "language_that_works": "Developer velocity, deployment frequency, incident MTTR, on-call burden, tech debt, build times, context switching, DX scores",
+      "avoid": "ROI-first framing, business jargon, HTML emails, cold calls to engineers"
+    },
+    "fintech": {
+      "name": "FinTech",
+      "buyer_priorities": "VP Finance / Compliance",
+      "language_that_works": "Regulatory compliance (SOX, PCI, Basel III, GDPR), fraud detection, transaction speed, reconciliation overhead, audit trail, chargeback rates",
+      "avoid": "Buzzwords, vague innovation claims, non-specific ROI language"
+    },
+    "hr_tech": {
+      "name": "HR Tech",
+      "buyer_priorities": "CHRO (new hire)",
+      "language_that_works": "Time-to-hire, quality of hire, turnover cost ($100K+ per sales rep), onboarding completion, compliance deadlines, DEI metrics, Glassdoor score, employee NPS",
+      "avoid": "Cost-only framing, aggressive urgency, treating HR as transactional"
+    },
+    "revops_sales_tech": {
+      "name": "RevOps / Sales Tech",
+      "buyer_priorities": "RevOps Lead / VP Sales",
+      "language_that_works": "Lead-to-account matching, routing logic, pipeline accuracy, forecast variance, rep ramp time, attribution gaps, CRM data quality, tool consolidation",
+      "avoid": "Sales-y language; this persona recognizes and rejects it immediately"
+    },
+    "martech": {
+      "name": "MarTech",
+      "buyer_priorities": "VP Marketing",
+      "language_that_works": "",
+      "avoid": ""
+    },
+    "legaltech": {
+      "name": "LegalTech",
+      "buyer_priorities": "General Counsel",
+      "language_that_works": "",
+      "avoid": ""
+    },
+    "healthtech": {
+      "name": "HealthTech",
+      "buyer_priorities": "VP Operations",
+      "language_that_works": "",
+      "avoid": ""
+    },
+    "data_analytics": {
+      "name": "Data / Analytics",
+      "buyer_priorities": "VP Data / Analytics Lead",
+      "language_that_works": "",
+      "avoid": ""
+    },
+    "e_commerce": {
+      "name": "E-commerce",
+      "buyer_priorities": "VP Ops / Head of Growth",
+      "language_that_works": "",
+      "avoid": ""
+    },
+    "real_estate_tech": {
+      "name": "Real Estate Tech",
+      "buyer_priorities": "Broker-Owner / VP Ops",
+      "language_that_works": "",
+      "avoid": ""
+    },
+    "edtech": {
+      "name": "EdTech",
+      "buyer_priorities": "VP Curriculum / IT Director",
+      "language_that_works": "",
+      "avoid": ""
+    }
+  },
+  "part_7_buyer_calendar": {
+    "end_of_fiscal_quarter": {
+      "buyer_state": "Urgency to hit number; distracted",
+      "angle_that_works": "\"Use remaining budget before it expires\" · end-of-quarter ROI framing",
+      "avoid": "Long evaluations, complex commitments",
+      "cta_adjustment": "Ultra-short: \"Worth a 15-min call this week?\""
+    },
+    "new_fiscal_year": {
+      "buyer_state": "Planning mode; receptive to new tools",
+      "angle_that_works": "\"Teams planning [goal] are starting this now\"",
+      "avoid": "Rushing to close — they have time",
+      "cta_adjustment": "Longer evaluation OK; planning conversation"
+    },
+    "post_funding_series_a_b_c": {
+      "buyer_state": "Expanding; building; hiring",
+      "angle_that_works": "Reference growth challenges: \"Teams scaling from X to Y typically hit [problem]\"",
+      "avoid": "Hollow congratulations without insight",
+      "cta_adjustment": "Planning and scaling conversation"
+    },
+    "post_layoff_cost_cutting": {
+      "buyer_state": "Risk-averse; budget scrutiny",
+      "angle_that_works": "Efficiency, consolidation, cost reduction, doing more with less",
+      "avoid": "Expansion framing, premium positioning",
+      "cta_adjustment": "ROI conversation; \"reduce cost by X\""
+    },
+    "post_acquisition": {
+      "buyer_state": "Uncertain; integration stress",
+      "angle_that_works": "Acknowledge change; offer stability/integration support",
+      "avoid": "Challenging assumptions about their new direction",
+      "cta_adjustment": "Low-commitment, empathetic ask"
+    },
+    "new_executive_hire": {
+      "buyer_state": "First 90 days; agenda-setting; most receptive",
+      "angle_that_works": "\"In your first 90 days, most [role] leaders prioritize [X]\"",
+      "avoid": "Assuming they know the existing stack",
+      "cta_adjustment": "Vision/priority alignment conversation"
+    },
+    "product_launch": {
+      "buyer_state": "Momentum; growth focus",
+      "angle_that_works": "Reference launch; scale challenges post-launch",
+      "avoid": "Making it about you; generic congratulations",
+      "cta_adjustment": "\"Curious if that resonates?\" — soft"
+    },
+    "conference_season_pre": {
+      "buyer_state": "Exploration mode; scheduling",
+      "angle_that_works": "\"Making the most of limited time at [conference]\"",
+      "avoid": "Pitching; hard asks",
+      "cta_adjustment": "\"Open to connecting?\""
+    },
+    "conference_season_post": {
+      "buyer_state": "Buried in follow-up; sorting signal from noise",
+      "angle_that_works": "Hyper-specific personal detail from actual conversation",
+      "avoid": "Badge-scan blast; generic \"great to meet you\"",
+      "cta_adjustment": "Send within 24–48 hours; reference specific detail"
+    },
+    "summer_slowdown": {
+      "buyer_state": "Lower volume; more bandwidth",
+      "angle_that_works": "Q4 preparation framing; casual tone; lighter emails",
+      "avoid": "Manufacturing urgency; high-commitment asks",
+      "cta_adjustment": "Multiple response modes; \"virtual coffee?\""
+    },
+    "end_of_calendar_year": {
+      "buyer_state": "Compressed timeline; high intent when reply",
+      "angle_that_works": "\"Sign now, implement in January\" · budget expiry · micro-calls only",
+      "avoid": "Standard sequences; 45-min demo requests; 12-page proposals",
+      "cta_adjustment": "2-word CTA; mobile-scannable 2-page Decision Brief"
+    }
+  },
+  "part_8_sequence_architecture": {
+    "optimal_structure": [
+      {
+        "deal_type": "SMB",
+        "step_count": "7–8",
+        "email_steps": "4–5",
+        "phone_steps": "2",
+        "linkedin_steps": "1–2",
+        "duration": "14–21 days"
+      },
+      {
+        "deal_type": "Mid-market",
+        "step_count": "10–12",
+        "email_steps": "4–5",
+        "phone_steps": "3–4",
+        "linkedin_steps": "2–3",
+        "duration": "21–30 days"
+      },
+      {
+        "deal_type": "Enterprise",
+        "step_count": "12–15",
+        "email_steps": "4–6",
+        "phone_steps": "4–5",
+        "linkedin_steps": "3–4",
+        "duration": "30–45 days"
+      }
+    ],
+    "channel_pattern": "Email → LinkedIn connection → Email → Phone → LinkedIn message → Email → Phone → Email (breakup)",
+    "day_spacing": "Steps 1–3: every 2 days. Steps 4–6: every 3 days. Steps 7+: every 4–5 days. Summer: extend all spacing by 1–2 days.",
+    "reply_distribution": "93% of all replies arrive by Day 10. First follow-up adds up to 49% more replies over first touch alone. Email steps beyond 5–6 produce sharply declining returns; extend via phone and LinkedIn, not more email.",
+    "multichannel_multiplier": "Email + LinkedIn + Phone = 287% higher engagement than email-only. Initiating with a cold call doubles email reply rate. Leaving a voicemail doubles likelihood of email reply.",
+    "cta_by_stage": [
+      {
+        "stage": "First touch",
+        "cta_type": "Interest check question",
+        "example": "\"Is this on your radar for this quarter?\""
+      },
+      {
+        "stage": "Follow-up 1",
+        "cta_type": "New angle + soft question",
+        "example": "\"Curious if you're seeing the same challenge.\""
+      },
+      {
+        "stage": "Follow-up 2",
+        "cta_type": "Social proof + soft ask",
+        "example": "\"Worth 15 minutes to compare notes?\""
+      },
+      {
+        "stage": "Follow-up 3",
+        "cta_type": "Cost of inaction + direct ask",
+        "example": "\"Happy to share what [Peer] did — open to it?\""
+      },
+      {
+        "stage": "Follow-up 4+",
+        "cta_type": "Sandler negative reverse",
+        "example": "\"Should I assume this isn't a priority?\""
+      },
+      {
+        "stage": "Breakup",
+        "cta_type": "Going for the no",
+        "example": "\"I'll close your file — feel free to reach back if the timing changes.\""
+      }
+    ],
+    "never_on_first_touch": [
+      "Calendar link",
+      "pricing reference",
+      "product demo request",
+      "multiple questions",
+      "proposal offer"
+    ]
+  },
+  "part_9_benchmarks": {
+    "absolute": [
+      {
+        "metric": "Email open rate",
+        "average": "27–32%",
+        "good": "35–45%",
+        "excellent": "50%+",
+        "flag_threshold": "<20% = deliverability or subject problem"
+      },
+      {
+        "metric": "Email reply rate",
+        "average": "3–5%",
+        "good": "5–10%",
+        "excellent": "10–15%+",
+        "flag_threshold": "<3% = copy or targeting problem"
+      },
+      {
+        "metric": "Positive reply rate",
+        "average": "1.5–3%",
+        "good": "3–5%",
+        "excellent": "5%+",
+        "flag_threshold": "<1.5% = methodology or persona mismatch"
+      },
+      {
+        "metric": "Meeting book rate",
+        "average": "0.5–1%",
+        "good": "1–2%",
+        "excellent": "2%+",
+        "flag_threshold": "<0.5% = CTA or qualification problem"
+      },
+      {
+        "metric": "Sequence step reply (step 1)",
+        "average": "8.4% per Belkins",
+        "good": "—",
+        "excellent": "—",
+        "flag_threshold": "<5% = first touch copy problem"
+      },
+      {
+        "metric": "Bounce rate",
+        "average": "<3%",
+        "good": "<2%",
+        "excellent": "<1%",
+        "flag_threshold": ">3% = list quality problem"
+      },
+      {
+        "metric": "Spam complaint rate",
+        "average": "<0.3%",
+        "good": "<0.1%",
+        "excellent": "0%",
+        "flag_threshold": ">0.3% = Google hard violation"
+      }
+    ],
+    "relative_triggers": [
+      "Step performing >40% below sequence average → flag for rewrite",
+      "Step performing >60% below top performer equivalent → flag as critical",
+      "Follow-up reply rate higher than first touch → first touch is the problem",
+      "Open rate fine, reply rate low → body copy problem (not subject line)",
+      "Open rate low, reply rate acceptable from opens → subject line problem"
+    ]
+  },
+  "part_10_output_format": {
+    "tier_1_required": [
+      "Step copy (current email or script text)",
+      "Persona — recipient title / function / seniority",
+      "Sequence stage — first touch, follow-up N, or breakup",
+      "Performance data — open rate and reply rate for this step"
+    ],
+    "tier_2_high_value": [
+      "Industry vertical",
+      "Deal type — SMB, mid-market, or enterprise",
+      "Detected failure mode(s) from diagnostic",
+      "Top performer variant for same step (if available)"
+    ],
+    "tier_3_contextual": [
+      "Buyer calendar context — timing trigger if known",
+      "Prior steps in sequence — what angles have already been used",
+      "Persona-specific pain language preferences by vertical"
+    ],
+    "minimum_viable_output_structure": [
+      "**Diagnosis** — which failure mode(s) detected and why (data signal + copy signal)",
+      "**Methodology selection** — which framework governs the rewrite and why",
+      "**Rewrite direction(s) selected** — from the taxonomy in Part 4",
+      "**Rewritten copy** — applying all invariant rules + methodology + persona calibration",
+      "**What changed and why** — diff-style explanation of every major change made"
+    ]
+  }
+}
