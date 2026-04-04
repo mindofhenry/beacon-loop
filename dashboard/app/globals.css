@@ -1,9 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+/* Fira Code + Fira Sans — per design-system/beacon-loop/MASTER.md */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: 'IBM Plex Sans', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'Fira Sans', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+}
+
+:root {
+  /* Color tokens — design-system/beacon-loop/MASTER.md */
+  --color-primary: #1E40AF;
+  --color-secondary: #3B82F6;
+  --color-cta: #F59E0B;
+  --color-background: #F8FAFC;
+  --color-text: #1E3A8A;
+
+  /* Spacing tokens */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Shadow tokens */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
 }
 
 html {
@@ -13,7 +39,8 @@ html {
 body {
   background-color: #0a0a0a;
   color: #f1f5f9;
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: 'Fira Sans', sans-serif;
+  font-size: 17px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -40,4 +67,22 @@ body::before {
 ::-webkit-scrollbar-thumb {
   background: #222;
   border-radius: 2px;
+}
+
+/* Rewrite drawer slide-in animation */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Ask Beacon streaming cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Ask Beacon modal slide-up */
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }

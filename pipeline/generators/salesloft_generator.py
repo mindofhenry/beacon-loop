@@ -74,10 +74,10 @@ CADENCE_CONFIGS = [
      "tier": "green",
      "num_steps": 5,
      "value_add_step": 3},
-    {"name": "VP Sales — Enterprise Pipeline Push",
-     "cadence_function": "outbound", "tags": ["vp-sales", "enterprise", "pipeline"],
-     "description": "High-volume outbound to VP Sales at enterprise accounts. Research-backed value-add approach.",
-     "tier": "yellow",
+    {"name": "VP Engineering — AppSec Program Starter",
+     "cadence_function": "outbound", "tags": ["vp-eng", "appsec", "developer-security"],
+     "description": "High-volume VP Engineering sequence. Developer security program framing with value-add benchmark report at step 3.",
+     "tier": "green",
      "num_steps": 6,
      "prospect_count": 400,   # HIGH VOLUME: 100 POOL + 300 synthetic
      "value_add_step": 3},
@@ -104,13 +104,12 @@ CADENCE_CONFIGS = [
      "tier": "green",
      "num_steps": 5,
      "social_proof_step": 3},
-    {"name": "VP Sales — Competitive Win-Back",
-     "cadence_function": "outbound", "tags": ["vp-sales", "competitive", "win-back"],
-     "description": "High-volume VP Sales win-back. Decent reply rates, zero meeting conversion (tests health gate).",
-     "tier": "yellow",   # yellow rates → decent replies; synthetic-only pool → zero meetings → pipeline forces red
+    {"name": "CISO — Supply Chain Security",
+     "cadence_function": "outbound", "tags": ["ciso", "supply-chain", "third-party-risk"],
+     "description": "CISO sequence targeting third-party risk and supply chain security gaps. Social proof customer results at step 3.",
+     "tier": "green",
      "num_steps": 6,
-     "prospect_count": 350,
-     "synthetic_only": True},
+     "social_proof_step": 3},
 ]
 
 TOPICS      = ["security", "compliance", "identity", "cloud infrastructure", "developer tooling"]

@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useRewriteDrawer } from '@/context/RewriteDrawerContext'
 
 type StepRow = {
   id: string
@@ -67,6 +68,7 @@ export default function SequencePage({
 }) {
   const { id } = use(params)
   const router = useRouter()
+  const { openDrawer } = useRewriteDrawer()
   const [steps, setSteps] = useState<StepRow[]>([])
   const [sequenceName, setSequenceName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -178,7 +180,7 @@ export default function SequencePage({
               {steps.map((step) => (
                 <tr
                   key={step.step_id}
-                  onClick={() => step.flag_type !== 'none' ? router.push(`/steps/${step.step_id}`) : undefined}
+                  onClick={() => step.flag_type !== 'none' ? openDrawer(step.step_id) : undefined}
                   className={`border-b border-b-[#1a1a1a] transition-colors duration-150 hover:bg-[#0f0f0f] ${
                     step.flag_type !== 'none'
                       ? 'bg-[#0d0606] border-l-2 border-l-[#f87171] cursor-pointer'

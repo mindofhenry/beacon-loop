@@ -161,6 +161,9 @@ If the Railway CLI loses the service link, re-run: `railway service beacon-loop`
 - `sequence_steps.messaging_theme_classified_at` — when the classification ran
 - `step_performance.messaging_theme` — passthrough from sequence_steps for dashboard charts
 
+**Key column added by 009_opp_amount_on_attribution.sql:**
+- `step_attribution_credit.opportunity_amount` — dollar amount of the opportunity, used for deduplicated pipeline totals. Do NOT sum `step_performance.pipeline_value` across steps for pipeline KPIs — it double-counts. Instead, use `SELECT SUM(amt) FROM (SELECT DISTINCT opportunity_id, opportunity_amount as amt FROM step_attribution_credit) sub`.
+
 ## Environment Variables
 
 Required in `.env` (never read or output this file):

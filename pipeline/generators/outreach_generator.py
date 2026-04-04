@@ -68,9 +68,9 @@ SEQUENCE_CONFIGS = [
     {"name": "CTO Sequence — Post-Funding Outreach",    "tags": ["cto", "post-funding", "enterprise"],     "description": "Targeting CTOs at companies that closed a Series B or C in the last 90 days.",                 "tier": "green"},
     {"name": "Security Engineer — Inbound Follow-Up",   "tags": ["security-engineer", "inbound"],          "description": "Follow-up sequence for inbound leads from security engineering personas.",                     "tier": "red"},
     # ── New 8 (IDs 1006–1013) ─────────────────────────────────────────────────────────────
-    {"name": "VP Sales — Q3 Revenue Push",
-     "tags": ["vp-sales", "revenue", "q3"],
-     "description": "High-volume outbound to VP Sales at mid-market companies. Q3 pipeline acceleration angle with data-driven value-add.",
+    {"name": "CISO — Threat Detection ROI",
+     "tags": ["ciso", "threat-detection", "roi"],
+     "description": "High-volume CISO sequence. Quantifies detection gap costs and ROI of faster response times. Value-add research hook at step 3.",
      "tier": "green",
      "num_steps": 5,
      "prospect_count": 400,   # HIGH VOLUME: 100 POOL + 300 synthetic
@@ -92,9 +92,9 @@ SEQUENCE_CONFIGS = [
      "description": "Cold outreach to IT Directors managing cloud security posture and tool consolidation.",
      "tier": "yellow",
      "num_steps": 5},
-    {"name": "VP Sales — Stalled Deal Re-Engage",
-     "tags": ["vp-sales", "re-engage", "pipeline"],
-     "description": "7-step re-engagement sequence for VP Sales contacts at stalled opportunities.",
+    {"name": "IT Director — Patch Cycle Acceleration",
+     "tags": ["it-director", "patch-management", "vulnerability"],
+     "description": "7-step sequence targeting IT Directors struggling with patch cycle backlog and vulnerability exposure windows.",
      "tier": "yellow",
      "num_steps": 7,
      "prospect_count": 400},  # HIGH VOLUME: 100 POOL + 300 synthetic

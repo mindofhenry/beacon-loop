@@ -124,7 +124,17 @@
       "Bash(PYTHONIOENCODING=utf-8 python pipeline/attribution_model.py)",
       "Bash(curl -s http://localhost:3099/api/org/messaging-attribution?days=30)",
       "Bash(kill %1)",
-      "Bash(pkill -f \"next start\")"
+      "Bash(pkill -f \"next start\")",
+      "Bash(ls c:/Dev/beacon-loop/*.md)",
+      "Bash(PYTHONIOENCODING=utf-8 python pipeline/seed_sequence_steps.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python pipeline/classify_messaging_theme.py)",
+      "Bash(xargs grep:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python pipeline/backfill_rewrites.py)",
+      "Read(//c/Dev/beacon-loop/NR>1 {sum += $5; count++} END {printf \"Opps: %d, Total: $%d/**)",
+      "Read(//c/Dev/beacon-loop/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Dev\\beacon-loop\\dashboard\\app\\reps"
     ]
   },
   "enableAllProjectMcpServers": true,

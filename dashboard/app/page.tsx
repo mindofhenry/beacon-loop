@@ -1,51 +1,116 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Loader2, AlertTriangle, Sparkles, Users, BarChart3, RefreshCw, Copy, Check, Zap } from 'lucide-react'
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
-  ReferenceLine,
   ResponsiveContainer,
   Cell,
 } from 'recharts'
-import SequenceSlideOut from '@/components/SequenceSlideOut'
+import { supabase } from '@/lib/supabase'
+import { useRole } from '@/context/RoleContext'
+import { useRewriteDrawer } from '@/context/RewriteDrawerContext'
 
-type Sequence = {
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+type KpiData = {
+  activeSequences: number
+  avgReplyRate: number
+  pipelineInfluenced: number
+  flaggedSteps: number
+}
+
+type StepPerfRow = {
   id: string
+  step_id: string
+  sequence_id: string
+  sequence_name: string | null
+  step_number: number
+  step_type: string | null
+  step_intent: string | null
+  reply_rate: number | null
+  open_rate: number | null
+  send_volume: number
+  pipeline_value: number | null
+  flag_type: string | null
+  flag_confidence: number | null
+  messaging_theme: string | null
+  rep_id: number | null
+}
+
+type RepRow = {
+  id: number
   name: string
-  source: string
-  status: string
-  healthScore: number
-  tier: 'green' | 'yellow' | 'red'
-  flaggedStepCount: number
-  stepCount: number
+  team: string
 }
 
-type OrgSummary = {
-  summary_text: string
-  data_snapshot: {
-    activeSequenceCount: number
-    orgAvgReplyRate: number
-    totalPipelineValue: number
-    flaggedStepCount: number
-  }
+type CoachingRow = {
+  repId: number
+  repName: string
+  team: string
+  flaggedCount: number
+  worstReplyRate: number | null
+  worstStepId: string | null
+  worstStepLabel: string
 }
 
-const tierFill = { green: '#22c55e', yellow: '#F59E0B', red: '#ef4444' }
+type ThemeAttribution = {
+  theme: string
+  total_pipeline_value: number
+  step_count: number
+}
 
-function StatCard({
-  label,
-  value,
-  subLabel,
-}: {
-  label: string
-  value: string
-  subLabel: string
-}) {
+type FlaggedStep = {
+  stepId: string
+  sequenceName: string
+  stepNumber: number
+  stepType: string | null
+  stepIntent: string | null
+  replyRate: number | null
+  flagType: string
+  flagConfidence: number | null
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function fmt(rate: number | null): string {
+  if (rate == null) return '—'
+  return `${(rate * 100).toFixed(1)}%`
+}
+
+function fmtPipeline(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
+  return `$${value.toLocaleString()}`
+}
+
+function themeLabel(theme: string): string {
+  return theme.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function severityFromConfidence(confidence: number | null): 'high' | 'medium' | 'low' {
+  if (confidence == null) return 'low'
+  if (confidence >= 0.8) return 'high'
+  if (confidence >= 0.5) return 'medium'
+  return 'low'
+}
+
+const severityColors: Record<string, { bg: string; color: string; border: string }> = {
+  high: { bg: '#1a0505', color: '#f87171', border: '#331010' },
+  medium: { bg: '#1a1200', color: '#fbbf24', border: '#332400' },
+  low: { bg: '#141414', color: '#555', border: '#222' },
+}
+
+const themeColors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444']
+
+// ─── KPI Card ──────────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, subLabel }: { label: string; value: string; subLabel: string }) {
   return (
     <div
       style={{
@@ -56,308 +121,720 @@ function StatCard({
       }}
     >
       <div
-        style={{
-          fontFamily: 'IBM Plex Mono, monospace',
-          fontSize: '9px',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: '#3a3a3a',
-          marginBottom: '5px',
-        }}
+        className="font-mono text-[11px] uppercase"
+        style={{ letterSpacing: '0.08em', color: '#3a3a3a', marginBottom: '5px' }}
       >
         {label}
       </div>
       <div
-        style={{
-          fontFamily: 'IBM Plex Mono, monospace',
-          fontSize: '22px',
-          fontWeight: 500,
-          color: '#e5e5e5',
-          letterSpacing: '-0.02em',
-        }}
+        className="font-mono text-[29px] font-medium"
+        style={{ color: '#e5e5e5', letterSpacing: '-0.02em' }}
       >
         {value}
       </div>
-      <div
-        style={{
-          fontFamily: 'IBM Plex Mono, monospace',
-          fontSize: '9px',
-          color: '#333',
-          marginTop: '3px',
-        }}
-      >
+      <div className="font-mono text-[11px]" style={{ color: '#333', marginTop: '3px' }}>
         {subLabel}
       </div>
     </div>
   )
 }
 
-export default function OrgHealthPage() {
-  const [sequences, setSequences] = useState<Sequence[]>([])
-  const [summary, setSummary] = useState<OrgSummary | null>(null)
-  const [loadingSeqs, setLoadingSeqs] = useState(true)
-  const [loadingSummary, setLoadingSummary] = useState(true)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [personaConfigId, setPersonaConfigId] = useState<string>('')
+// ─── Section Header ────────────────────────────────────────────────────────
 
-  const fetchSequences = useCallback(async () => {
-    setLoadingSeqs(true)
-    const res = await fetch('/api/sequences')
-    const json = await res.json()
-    setSequences(json.data ?? [])
-    setLoadingSeqs(false)
+function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <span style={{ color: '#444' }}>{icon}</span>
+      <span
+        className="font-mono text-[11px] uppercase"
+        style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+      >
+        {label}
+      </span>
+    </div>
+  )
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────
+
+export default function OverviewPage() {
+  const { role } = useRole()
+  const { openDrawer } = useRewriteDrawer()
+  const router = useRouter()
+
+  const [loading, setLoading] = useState(true)
+  const [kpis, setKpis] = useState<KpiData | null>(null)
+  const [coachingQueue, setCoachingQueue] = useState<CoachingRow[]>([])
+  const [themeData, setThemeData] = useState<ThemeAttribution[]>([])
+  const [flaggedSteps, setFlaggedSteps] = useState<FlaggedStep[]>([])
+  const [currentRepName, setCurrentRepName] = useState<string>('')
+
+  // LLM panel state
+  const [quickActions, setQuickActions] = useState<string[]>([])
+  const [quickActionsLoading, setQuickActionsLoading] = useState(false)
+  const [orgIntel, setOrgIntel] = useState<string[]>([])
+  const [orgIntelLoading, setOrgIntelLoading] = useState(false)
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
+
+  // Store raw data for LLM context
+  const [rawFlaggedData, setRawFlaggedData] = useState<string>('')
+  const [rawPerfData, setRawPerfData] = useState<string>('')
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+
+    // Fetch step_performance, reps, and attribution credits in parallel
+    const [perfResult, repsResult, creditsResult] = await Promise.all([
+      supabase
+        .from('step_performance')
+        .select('id, step_id, sequence_id, sequence_name, step_number, step_type, step_intent, reply_rate, open_rate, send_volume, pipeline_value, flag_type, flag_confidence, messaging_theme, rep_id'),
+      supabase
+        .from('reps')
+        .select('id, name, team'),
+      supabase
+        .from('step_attribution_credit')
+        .select('step_id, opportunity_id, opportunity_amount'),
+    ])
+
+    const steps: StepPerfRow[] = (perfResult.data ?? []) as StepPerfRow[]
+    const reps: RepRow[] = (repsResult.data ?? []) as RepRow[]
+    const credits = (creditsResult.data ?? []) as { step_id: string; opportunity_id: string; opportunity_amount: number | null }[]
+    const repMap = new Map(reps.map((r) => [r.id, r]))
+
+    // ── KPIs ──
+    const sequenceIds = new Set(steps.map((s) => s.sequence_id))
+    const replyRates = steps.map((s) => Number(s.reply_rate) || 0)
+    const avgReply = replyRates.length > 0 ? replyRates.reduce((a, b) => a + b, 0) / replyRates.length : 0
+    // Deduplicated pipeline: sum each opportunity's amount exactly once
+    const oppAmounts = new Map<string, number>()
+    for (const c of credits) {
+      if (c.opportunity_id && c.opportunity_amount != null && !oppAmounts.has(c.opportunity_id)) {
+        oppAmounts.set(c.opportunity_id, Number(c.opportunity_amount))
+      }
+    }
+    const totalPipeline = Array.from(oppAmounts.values()).reduce((a, b) => a + b, 0)
+    const flaggedCount = steps.filter((s) => s.flag_type != null).length
+
+    setKpis({
+      activeSequences: sequenceIds.size,
+      avgReplyRate: avgReply,
+      pipelineInfluenced: totalPipeline,
+      flaggedSteps: flaggedCount,
+    })
+
+    // ── Coaching Queue (Manager) ──
+    const flaggedByRep = new Map<number, { steps: StepPerfRow[] }>()
+    for (const s of steps) {
+      if (s.flag_type == null || s.rep_id == null) continue
+      if (!flaggedByRep.has(s.rep_id)) flaggedByRep.set(s.rep_id, { steps: [] })
+      flaggedByRep.get(s.rep_id)!.steps.push(s)
+    }
+
+    const queue: CoachingRow[] = []
+    for (const [repId, data] of flaggedByRep) {
+      const rep = repMap.get(repId)
+      if (!rep) continue
+      let worstRate: number | null = null
+      let worstStepId: string | null = null
+      let worstLabel = ''
+      for (const s of data.steps) {
+        const rate = Number(s.reply_rate) ?? null
+        if (worstRate === null || rate < worstRate) {
+          worstRate = rate
+          worstStepId = s.step_id
+          worstLabel = `${s.sequence_name ?? s.sequence_id} — Step ${s.step_number}`
+        }
+      }
+      queue.push({
+        repId: rep.id,
+        repName: rep.name,
+        team: rep.team,
+        flaggedCount: data.steps.length,
+        worstReplyRate: worstRate,
+        worstStepId,
+        worstStepLabel: worstLabel,
+      })
+    }
+    queue.sort((a, b) => b.flaggedCount - a.flaggedCount)
+    setCoachingQueue(queue)
+
+    // ── Messaging Attribution (RevOps) ──
+    // Build lookup: step_performance UUID → messaging_theme
+    const stepThemeMap = new Map<string, string>()
+    for (const s of steps) {
+      if (s.messaging_theme) stepThemeMap.set(s.id, s.messaging_theme)
+    }
+    // Deduplicate: count each opportunity once per theme (via the step it credited)
+    const themeOppSeen = new Map<string, Set<string>>()
+    const themeMap = new Map<string, { pipeline: number; count: number }>()
+    for (const c of credits) {
+      const theme = stepThemeMap.get(c.step_id)
+      if (!theme || c.opportunity_amount == null) continue
+      if (!themeOppSeen.has(theme)) themeOppSeen.set(theme, new Set())
+      if (themeOppSeen.get(theme)!.has(c.opportunity_id)) continue
+      themeOppSeen.get(theme)!.add(c.opportunity_id)
+      const existing = themeMap.get(theme) ?? { pipeline: 0, count: 0 }
+      existing.pipeline += Number(c.opportunity_amount)
+      existing.count += 1
+      themeMap.set(theme, existing)
+    }
+    // Also count steps per theme for the label
+    const stepsPerTheme = new Map<string, number>()
+    for (const s of steps) {
+      if (s.messaging_theme) stepsPerTheme.set(s.messaging_theme, (stepsPerTheme.get(s.messaging_theme) ?? 0) + 1)
+    }
+    const themes: ThemeAttribution[] = Array.from(themeMap.entries())
+      .map(([theme, d]) => ({ theme, total_pipeline_value: d.pipeline, step_count: stepsPerTheme.get(theme) ?? d.count }))
+      .sort((a, b) => b.total_pipeline_value - a.total_pipeline_value)
+    setThemeData(themes)
+
+    // ── My Flagged Steps (Rep) ──
+    // TODO: Wire to real rep identity when auth is implemented.
+    // For now, pick the rep with the most flagged steps to make it interesting.
+    const topRep = queue[0]
+    if (topRep) {
+      setCurrentRepName(topRep.repName)
+      const mySteps = steps
+        .filter((s) => s.flag_type != null && s.rep_id === topRep.repId)
+        .sort((a, b) => (Number(a.reply_rate) || 0) - (Number(b.reply_rate) || 0))
+        .map((s) => ({
+          stepId: s.step_id,
+          sequenceName: s.sequence_name ?? s.sequence_id,
+          stepNumber: s.step_number,
+          stepType: s.step_type,
+          stepIntent: s.step_intent,
+          replyRate: Number(s.reply_rate) ?? null,
+          flagType: s.flag_type!,
+          flagConfidence: s.flag_confidence,
+        }))
+      setFlaggedSteps(mySteps)
+    }
+
+    // ── Store context for LLM panels ──
+    const flagged = steps.filter((s) => s.flag_type != null)
+    const flaggedContext = flagged.map((s) => {
+      const rep = s.rep_id ? repMap.get(s.rep_id) : null
+      return `- ${s.sequence_name ?? s.sequence_id} Step ${s.step_number} (${s.step_type ?? 'email'}, ${s.step_intent ?? 'unknown'}): reply ${(Number(s.reply_rate) * 100).toFixed(1)}%, flag: ${s.flag_type}${s.flag_confidence ? ` (${(s.flag_confidence * 100).toFixed(0)}% confidence)` : ''}, theme: ${s.messaging_theme ?? 'none'}${rep ? `, rep: ${rep.name}` : ''}`
+    }).join('\n')
+    setRawFlaggedData(flaggedContext)
+
+    const perfContext = [
+      `Total sequences: ${sequenceIds.size}`,
+      `Total steps: ${steps.length}`,
+      `Avg reply rate: ${(avgReply * 100).toFixed(1)}%`,
+      `Pipeline influenced: $${totalPipeline.toLocaleString()}`,
+      `Flagged steps: ${flaggedCount}`,
+      `\nPerformance by messaging theme:`,
+      ...themes.map((t) => `- ${t.theme}: $${t.total_pipeline_value.toLocaleString()} pipeline, ${t.step_count} steps`),
+      `\nCoaching queue:`,
+      ...queue.map((q) => `- ${q.repName} (${q.team}): ${q.flaggedCount} flagged, worst reply ${q.worstReplyRate != null ? (q.worstReplyRate * 100).toFixed(1) + '%' : 'N/A'} at ${q.worstStepLabel}`),
+    ].join('\n')
+    setRawPerfData(perfContext)
+
+    setLoading(false)
   }, [])
 
-  const fetchSummary = useCallback(async (force = false) => {
-    setLoadingSummary(true)
-    const url = `/api/org/summary${force ? '?force=true' : ''}`
-    const res = await fetch(url)
-    const json = await res.json()
-    setSummary(json.data ?? null)
-    setLoadingSummary(false)
-  }, [])
-
-  // Fetch persona config id once
-  useEffect(() => {
-    fetch('/api/sequences').then(() => {
-      // persona config is fetched by the rewrite generate endpoint
-      // but we need the ID for the slide-out → modal chain
-      // Use a simple fetch to get it
-      fetch('/api/rewrites/generate', {
+  // ── LLM fetch: Quick Actions (Manager) ──
+  const fetchQuickActions = useCallback(async () => {
+    if (!rawFlaggedData) return
+    setQuickActionsLoading(true)
+    try {
+      const res = await fetch('/api/ask-beacon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepId: '__probe__' }),
-      }).catch(() => {})
-    })
-    // For now we'll pass empty string and let the API default to first persona
-  }, [])
+        body: JSON.stringify({
+          prompt: 'Based on the following flagged step data, give me 3-5 specific, actionable coaching recommendations. Each should name the specific sequence, step number, and metric, and suggest what to do. Be concise — one sentence per action. Return ONLY a JSON array of strings, each string being one action item. No other text.',
+          context: rawFlaggedData,
+        }),
+      })
+      const data = await res.json()
+      if (data.text) {
+        try {
+          const match = data.text.match(/\[[\s\S]*\]/)
+          const actions: string[] = match ? JSON.parse(match[0]) : [data.text]
+          setQuickActions(actions.slice(0, 5))
+        } catch {
+          setQuickActions(data.text.split('\n').filter((l: string) => l.trim().length > 0).slice(0, 5))
+        }
+      }
+    } catch {
+      setQuickActions(['Failed to load recommendations. Click refresh to try again.'])
+    }
+    setQuickActionsLoading(false)
+  }, [rawFlaggedData])
+
+  // ── LLM fetch: Org Intelligence (RevOps) ──
+  const fetchOrgIntel = useCallback(async () => {
+    if (!rawPerfData) return
+    setOrgIntelLoading(true)
+    try {
+      const res = await fetch('/api/ask-beacon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: 'Based on the following sequence performance and attribution data, give me your top 3 strategic recommendations for this org\'s outbound program. Each recommendation should be specific (name sequences, themes, or metrics), actionable, and one paragraph max. Return ONLY a JSON array of 3 strings. No other text.',
+          context: rawPerfData,
+        }),
+      })
+      const data = await res.json()
+      if (data.text) {
+        try {
+          const match = data.text.match(/\[[\s\S]*\]/)
+          const recs: string[] = match ? JSON.parse(match[0]) : [data.text]
+          setOrgIntel(recs.slice(0, 3))
+        } catch {
+          setOrgIntel(data.text.split('\n\n').filter((l: string) => l.trim().length > 0).slice(0, 3))
+        }
+      }
+    } catch {
+      setOrgIntel(['Failed to load recommendations. Click refresh to try again.'])
+    }
+    setOrgIntelLoading(false)
+  }, [rawPerfData])
+
+  // Auto-fetch LLM data when raw data is available
+  useEffect(() => {
+    if (rawFlaggedData && role === 'manager' && quickActions.length === 0 && !quickActionsLoading) {
+      fetchQuickActions()
+    }
+  }, [rawFlaggedData, role, quickActions.length, quickActionsLoading, fetchQuickActions])
 
   useEffect(() => {
-    fetchSequences()
-    fetchSummary()
-  }, [fetchSequences, fetchSummary])
+    if (rawPerfData && role === 'revops' && orgIntel.length === 0 && !orgIntelLoading) {
+      fetchOrgIntel()
+    }
+  }, [rawPerfData, role, orgIntel.length, orgIntelLoading, fetchOrgIntel])
 
-  // Stats from summary snapshot
-  const snap = summary?.data_snapshot
-  const activeCount = snap?.activeSequenceCount ?? sequences.length
-  const avgReply = snap?.orgAvgReplyRate ?? 0
-  const totalPipeline = snap?.totalPipelineValue ?? 0
-  const flaggedCount = snap?.flaggedStepCount ?? 0
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
-  // Chart data — sorted worst first (already from API)
-  const chartData = sequences.map((s) => ({
-    name: s.name.length > 24 ? s.name.slice(0, 24) + '...' : s.name,
-    fullName: s.name,
-    score: Math.round(s.healthScore * 100),
-    tier: s.tier,
-    flagged: s.flaggedStepCount,
-    id: s.id,
-  }))
+  const handleCopy = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text)
+    setCopiedIdx(idx)
+    setTimeout(() => setCopiedIdx(null), 2000)
+  }
 
-  const chartHeight = Math.max(300, chartData.length * 50)
+  // ── Role-specific greeting ──
+  const greeting: Record<string, string> = {
+    manager: 'What needs your attention today',
+    revops: 'Org-wide sequence intelligence',
+    rep: 'Your steps that need work',
+  }
 
-  const selectedSeq = sequences.find((s) => s.id === selectedId)
-
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Page title */}
-      <p
-        style={{
-          fontFamily: 'IBM Plex Sans, sans-serif',
-          fontSize: '13px',
-          fontWeight: 400,
-          color: '#aaa',
-          letterSpacing: '0.04em',
-          textTransform: 'lowercase',
-          marginBottom: '16px',
-        }}
-      >
-        org health
-      </p>
-      <div className="border-b border-[#1c1c1c] mb-6" />
-
-      {/* Stat cards */}
-      {loadingSeqs ? (
+  // ── Loading state ──
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <h1 className="font-sans text-[24px] font-semibold text-[#e5e5e5] mb-4">Overview</h1>
+        <div className="border-b border-[#1c1c1c] mb-6" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-20 bg-[#1c1c1c] rounded-lg animate-pulse" />
           ))}
         </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={20} className="animate-spin" style={{ color: '#333' }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Page title */}
+      <h1 className="font-sans text-[24px] font-semibold text-[#e5e5e5] mb-1">Overview</h1>
+      <p className="font-sans text-[15px] mb-4" style={{ color: '#555' }}>
+        {greeting[role]}
+      </p>
+      <div className="border-b border-[#1c1c1c] mb-6" />
+
+      {/* ── KPI Cards (all roles) ── */}
+      {kpis && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <KpiCard
             label="Active Sequences"
-            value={String(activeCount)}
+            value={String(kpis.activeSequences)}
             subLabel="outreach + salesloft"
           />
-          <StatCard
-            label="Org Avg Reply Rate"
-            value={`${(avgReply * 100).toFixed(1)}%`}
+          <KpiCard
+            label="Avg Reply Rate"
+            value={fmt(kpis.avgReplyRate)}
             subLabel="reply / sends"
           />
-          <StatCard
-            label="Total Pipeline Influenced"
-            value={`$${totalPipeline >= 1_000_000 ? `${(totalPipeline / 1_000_000).toFixed(1)}M` : totalPipeline.toLocaleString()}`}
+          <KpiCard
+            label="Pipeline Influenced"
+            value={fmtPipeline(kpis.pipelineInfluenced)}
             subLabel="u-shaped attribution"
           />
-          <StatCard
+          <KpiCard
             label="Flagged Steps"
-            value={String(flaggedCount)}
+            value={String(kpis.flaggedSteps)}
             subLabel="below threshold"
           />
         </div>
       )}
 
-      {/* Org Intelligence panel */}
-      <div
-        style={{
-          background: '#0f0f0f',
-          border: '1px solid #1c1c1c',
-          borderRadius: '7px',
-          padding: '14px 18px',
-          marginBottom: '24px',
-        }}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span
-            style={{
-              fontFamily: 'IBM Plex Mono, monospace',
-              fontSize: '9px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: '#333',
-            }}
-          >
-            org intelligence
-          </span>
-          <button
-            onClick={() => fetchSummary(true)}
-            disabled={loadingSummary}
-            className="flex items-center gap-1.5 cursor-pointer bg-transparent border-0 p-0"
-            style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', color: '#555' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#888' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = '#555' }}
-          >
-            {loadingSummary ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <RefreshCw size={12} />
-            )}
-            refresh
-          </button>
-        </div>
-        {loadingSummary ? (
-          <div className="space-y-2">
-            <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-full" />
-            <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
-          </div>
-        ) : (
-          <p
-            style={{
-              fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '12px',
-              color: '#888',
-              lineHeight: 1.6,
-              margin: 0,
-            }}
-          >
-            {summary?.summary_text ?? 'No summary available.'}
-          </p>
-        )}
-      </div>
-
-      {/* Health bar chart */}
-      {loadingSeqs ? (
-        <div className="h-[300px] w-full bg-[#1c1c1c] rounded-lg animate-pulse" />
-      ) : chartData.length > 0 ? (
-        <div>
-          <p
-            style={{
-              fontFamily: 'IBM Plex Mono, monospace',
-              fontSize: '9px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: '#333',
-              marginBottom: '12px',
-            }}
-          >
-            sequence health scores
-          </p>
-          <ResponsiveContainer width="100%" height={chartHeight}>
-            <BarChart
-              data={chartData}
-              layout="vertical"
-              margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-            >
-              <XAxis
-                type="number"
-                domain={[0, 100]}
-                tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Mono' }}
-                axisLine={{ stroke: '#1c1c1c' }}
-                tickLine={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={180}
-                tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Mono' }}
-                axisLine={{ stroke: '#1c1c1c' }}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#111111',
+      {/* ── Manager: Quick Actions + Coaching Queue ── */}
+      {role === 'manager' && (
+        <>
+          {/* Quick Actions — ABOVE coaching queue */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Zap size={15} style={{ color: '#f59e0b' }} />
+                <span
+                  className="font-mono text-[11px] uppercase"
+                  style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+                >
+                  Quick Actions
+                </span>
+              </div>
+              <button
+                onClick={() => { setQuickActions([]); fetchQuickActions() }}
+                disabled={quickActionsLoading}
+                className="flex items-center gap-1.5 font-mono text-[11px] uppercase px-2.5 py-1 rounded transition-colors duration-150"
+                style={{
+                  letterSpacing: '0.06em',
+                  color: quickActionsLoading ? '#333' : '#555',
+                  background: '#0f0f0f',
                   border: '1px solid #1c1c1c',
-                  borderRadius: '8px',
-                  fontFamily: 'IBM Plex Sans',
-                  fontSize: '12px',
-                }}
-                labelStyle={{ color: '#f1f5f9', fontFamily: 'IBM Plex Mono' }}
-                formatter={(value, _name, props) => {
-                  const p = props?.payload as { flagged?: number; fullName?: string } | undefined
-                  return [`Score: ${value} | Flagged: ${p?.flagged ?? 0}`, p?.fullName ?? '']
-                }}
-              />
-              <ReferenceLine
-                x={50}
-                stroke="#F59E0B"
-                strokeDasharray="4 4"
-                label={{ value: 'Yellow', fill: '#F59E0B', fontSize: 10, fontFamily: 'IBM Plex Mono', position: 'top' }}
-              />
-              <ReferenceLine
-                x={70}
-                stroke="#22c55e"
-                strokeDasharray="4 4"
-                label={{ value: 'Green', fill: '#22c55e', fontSize: 10, fontFamily: 'IBM Plex Mono', position: 'top' }}
-              />
-              <Bar
-                dataKey="score"
-                radius={[0, 4, 4, 0]}
-                cursor="pointer"
-                onClick={(_data: unknown, index: number) => {
-                  setSelectedId(chartData[index].id)
+                  cursor: quickActionsLoading ? 'default' : 'pointer',
                 }}
               >
-                {chartData.map((entry, index) => (
-                  <Cell key={index} fill={tierFill[entry.tier]} />
+                <RefreshCw size={12} className={quickActionsLoading ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+            </div>
+
+            {quickActionsLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-14 rounded-lg animate-pulse"
+                    style={{ background: '#111', border: '1px solid #1c1c1c' }}
+                  />
                 ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <p className="text-slate-400 font-sans text-sm">No sequence data found.</p>
+              </div>
+            ) : quickActions.length > 0 ? (
+              <div className="space-y-2">
+                {quickActions.map((action, i) => (
+                  <button
+                    key={i}
+                    onClick={() => router.push('/insights')}
+                    className="w-full text-left rounded-lg px-4 py-3 transition-colors duration-100"
+                    style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#252525' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1c1c1c' }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className="font-mono text-[13px] font-medium mt-0.5 shrink-0"
+                        style={{ color: '#f59e0b' }}
+                      >
+                        {i + 1}.
+                      </span>
+                      <span className="font-sans text-[15px] text-[#ccc] leading-relaxed">
+                        {action}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div
+                className="rounded-lg p-4 text-center"
+                style={{ background: '#0c0c0c', border: '1px dashed #1c1c1c' }}
+              >
+                <p className="font-sans text-[15px]" style={{ color: '#444' }}>
+                  Click refresh to generate coaching recommendations
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Coaching Queue */}
+          <SectionHeader icon={<Users size={15} />} label="Coaching Queue" />
+          {coachingQueue.length > 0 ? (
+            <div
+              className="rounded-lg overflow-hidden mb-6"
+              style={{ border: '1px solid #1c1c1c' }}
+            >
+              <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#0f0f0f' }}>
+                    {['Rep', 'Team', 'Flagged Steps', 'Worst Step', 'Reply Rate'].map((h) => (
+                      <th
+                        key={h}
+                        className="font-mono text-[11px] uppercase text-left px-4 py-3"
+                        style={{ letterSpacing: '0.08em', color: '#3a3a3a', borderBottom: '1px solid #1c1c1c' }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {coachingQueue.map((row) => (
+                    <tr
+                      key={row.repId}
+                      className="cursor-pointer transition-colors duration-100"
+                      style={{ borderBottom: '1px solid #141414' }}
+                      onClick={() => router.push('/insights')}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#111' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <td className="px-4 py-3 font-sans text-[15px] text-[#e5e5e5]">
+                        {row.repName}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[13px] text-[#555]">
+                        {row.team}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="font-mono text-[15px] font-medium"
+                          style={{ color: row.flaggedCount >= 15 ? '#f87171' : row.flaggedCount >= 10 ? '#fbbf24' : '#888' }}
+                        >
+                          {row.flaggedCount}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-sans text-[13px] text-[#888]" style={{ maxWidth: '260px' }}>
+                        <span className="truncate block">{row.worstStepLabel}</span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[15px]" style={{ color: '#f87171' }}>
+                        {fmt(row.worstReplyRate)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="font-sans text-[15px] text-[#555] mb-6">No flagged steps found.</p>
+          )}
+        </>
       )}
 
-      {/* Sequence slide-out */}
-      {selectedId && selectedSeq && (
-        <SequenceSlideOut
-          sequenceId={selectedId}
-          healthScore={selectedSeq.healthScore}
-          tier={selectedSeq.tier}
-          personaConfigId={personaConfigId}
-          onClose={() => setSelectedId(null)}
-        />
+      {/* ── RevOps: Messaging Attribution Chart ── */}
+      {role === 'revops' && (
+        <>
+          <SectionHeader icon={<BarChart3 size={15} />} label="Pipeline by Messaging Theme" />
+          {themeData.length > 0 ? (
+            <div
+              className="rounded-lg p-5 mb-6"
+              style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+            >
+              <ResponsiveContainer width="100%" height={Math.max(200, themeData.length * 52)}>
+                <BarChart
+                  data={themeData.map((d) => ({
+                    name: themeLabel(d.theme),
+                    pipeline: Math.round(d.total_pipeline_value),
+                    steps: d.step_count,
+                  }))}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                >
+                  <XAxis
+                    type="number"
+                    tick={{ fill: '#555', fontSize: 13, fontFamily: 'Fira Code' }}
+                    axisLine={{ stroke: '#1c1c1c' }}
+                    tickLine={false}
+                    tickFormatter={(v: number) => fmtPipeline(v)}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={140}
+                    tick={{ fill: '#888', fontSize: 13, fontFamily: 'Fira Code' }}
+                    axisLine={{ stroke: '#1c1c1c' }}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111111',
+                      border: '1px solid #1c1c1c',
+                      borderRadius: '8px',
+                      fontFamily: 'Fira Sans',
+                      fontSize: '15px',
+                    }}
+                    labelStyle={{ color: '#f1f5f9', fontFamily: 'Fira Code' }}
+                    formatter={(value, _name, props) => {
+                      const v = Number(value) || 0
+                      const p = props?.payload as { steps?: number } | undefined
+                      return [`${fmtPipeline(v)} (${p?.steps ?? 0} steps)`, 'Pipeline']
+                    }}
+                  />
+                  <Bar dataKey="pipeline" radius={[0, 4, 4, 0]}>
+                    {themeData.map((_, index) => (
+                      <Cell key={index} fill={themeColors[index % themeColors.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="font-sans text-[15px] text-[#555] mb-6">No messaging theme data found.</p>
+          )}
+
+          {/* Org Intelligence — live LLM section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Sparkles size={15} style={{ color: '#8b5cf6' }} />
+                <span
+                  className="font-mono text-[11px] uppercase"
+                  style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+                >
+                  Org Intelligence
+                </span>
+              </div>
+              <button
+                onClick={() => { setOrgIntel([]); fetchOrgIntel() }}
+                disabled={orgIntelLoading}
+                className="flex items-center gap-1.5 font-mono text-[11px] uppercase px-2.5 py-1 rounded transition-colors duration-150"
+                style={{
+                  letterSpacing: '0.06em',
+                  color: orgIntelLoading ? '#333' : '#555',
+                  background: '#0f0f0f',
+                  border: '1px solid #1c1c1c',
+                  cursor: orgIntelLoading ? 'default' : 'pointer',
+                }}
+              >
+                <RefreshCw size={12} className={orgIntelLoading ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+            </div>
+
+            {orgIntelLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-24 rounded-lg animate-pulse"
+                    style={{ background: '#111', border: '1px solid #1c1c1c' }}
+                  />
+                ))}
+              </div>
+            ) : orgIntel.length > 0 ? (
+              <div className="space-y-3">
+                {orgIntel.map((rec, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg px-4 py-3"
+                    style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <span
+                          className="font-mono text-[13px] font-medium mt-0.5 shrink-0"
+                          style={{ color: '#8b5cf6' }}
+                        >
+                          {i + 1}.
+                        </span>
+                        <p className="font-sans text-[15px] text-[#ccc] leading-relaxed">
+                          {rec}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(rec, i)}
+                        className="shrink-0 p-1.5 rounded transition-colors duration-150"
+                        style={{ color: copiedIdx === i ? '#22c55e' : '#444', background: 'transparent' }}
+                        title="Copy to clipboard"
+                      >
+                        {copiedIdx === i ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                className="rounded-lg p-4 text-center"
+                style={{ background: '#0c0c0c', border: '1px dashed #1c1c1c' }}
+              >
+                <p className="font-sans text-[15px]" style={{ color: '#444' }}>
+                  Click refresh to generate strategic recommendations
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── Rep: My Flagged Steps ── */}
+      {role === 'rep' && (
+        <>
+          {/* TODO: Spec says Quick Actions for Rep role. Skipped — the flagged steps list sorted by severity + rewrite drawer access is already the rep's action list. Add LLM quick actions here when reps have enough data to warrant AI prioritization. */}
+          <SectionHeader
+            icon={<AlertTriangle size={15} />}
+            label={`My Flagged Steps${currentRepName ? ` — ${currentRepName}` : ''}`}
+          />
+          {flaggedSteps.length > 0 ? (
+            <div className="space-y-2 mb-6">
+              {flaggedSteps.map((step) => {
+                const sev = severityFromConfidence(step.flagConfidence)
+                const sevStyle = severityColors[sev]
+                return (
+                  <button
+                    key={step.stepId}
+                    onClick={() => openDrawer(step.stepId)}
+                    className="w-full text-left rounded-lg p-4 transition-colors duration-100 cursor-pointer"
+                    style={{
+                      background: '#0f0f0f',
+                      border: '1px solid #1c1c1c',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#252525' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1c1c1c' }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans text-[15px] text-[#e5e5e5]">
+                          {step.sequenceName}
+                        </span>
+                        <span className="font-mono text-[13px] text-[#555]">
+                          Step {step.stepNumber}
+                        </span>
+                      </div>
+                      <span
+                        className="font-mono text-[11px] px-2 py-0.5 rounded uppercase"
+                        style={{ background: sevStyle.bg, color: sevStyle.color, border: `1px solid ${sevStyle.border}` }}
+                      >
+                        {sev}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-[13px]" style={{ color: '#f87171' }}>
+                        {fmt(step.replyRate)} reply
+                      </span>
+                      {step.stepType && (
+                        <span
+                          className="font-mono text-[11px] px-1.5 py-0.5 rounded"
+                          style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+                        >
+                          {step.stepType}
+                        </span>
+                      )}
+                      {step.stepIntent && (
+                        <span
+                          className="font-mono text-[11px] px-1.5 py-0.5 rounded"
+                          style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+                        >
+                          {step.stepIntent}
+                        </span>
+                      )}
+                      <span className="font-mono text-[11px] text-[#333] ml-auto">
+                        View rewrite →
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="font-sans text-[15px] text-[#555] mb-6">No flagged steps found.</p>
+          )}
+        </>
       )}
     </div>
   )

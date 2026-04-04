@@ -133,38 +133,24 @@ export default function SequenceSlideOut({
           style={{ background: '#0a0a0a', borderBottom: '1px solid #1c1c1c' }}
         >
           <div className="flex items-center gap-3">
-            <span
-              style={{
-                fontFamily: 'IBM Plex Sans',
-                fontSize: '13px',
-                fontWeight: 400,
-                color: '#aaa',
-                letterSpacing: '0.04em',
-              }}
-            >
+            <span className="font-sans text-[17px] text-[#aaa]" style={{ letterSpacing: '0.04em' }}>
               {detail?.sequence_name ?? sequenceId}
             </span>
             {detail?.source && (
               <span
+                className="font-mono text-[11px] rounded px-1.5 py-0.5"
                 style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '9px',
                   background: '#141414',
                   color: '#555',
                   border: '1px solid #222',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
                 }}
               >
                 {detail.source}
               </span>
             )}
             <span
+              className="font-mono text-[13px] rounded px-2 py-0.5"
               style={{
-                fontFamily: 'IBM Plex Mono',
-                fontSize: '10px',
-                padding: '2px 8px',
-                borderRadius: '4px',
                 background: pill.bg,
                 color: pill.color,
                 border: `1px solid ${pill.border}`,
@@ -187,30 +173,24 @@ export default function SequenceSlideOut({
         <div className="px-6 py-6 space-y-6">
           {/* Sequence Intelligence */}
           <div
+            className="rounded-md p-4"
             style={{
               background: '#0f0f0f',
               border: '1px solid #1c1c1c',
-              borderRadius: '6px',
-              padding: '16px',
             }}
           >
             <div className="flex items-center justify-between mb-3">
               <span
-                style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '9px',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#333',
-                }}
+                className="font-mono text-[11px] uppercase text-[#333]"
+                style={{ letterSpacing: '0.08em' }}
               >
                 Sequence Intelligence
               </span>
               <button
                 onClick={() => fetchSummary(true)}
                 disabled={loadingSummary}
-                className="flex items-center gap-1.5 transition-colors duration-150 cursor-pointer"
-                style={{ fontFamily: 'IBM Plex Mono', fontSize: '10px', color: '#555' }}
+                className="flex items-center gap-1.5 transition-colors duration-150 cursor-pointer font-mono text-[13px]"
+                style={{ color: '#555' }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = '#555')}
               >
@@ -228,14 +208,7 @@ export default function SequenceSlideOut({
                 <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
               </div>
             ) : (
-              <p
-                style={{
-                  fontFamily: 'IBM Plex Sans',
-                  fontSize: '12px',
-                  color: '#888',
-                  lineHeight: 1.6,
-                }}
-              >
+              <p className="font-sans text-[17px] text-[#888] leading-relaxed">
                 {summary?.summary_text ?? 'No summary available.'}
               </p>
             )}
@@ -251,14 +224,8 @@ export default function SequenceSlideOut({
           ) : chartData.length > 0 ? (
             <div>
               <p
-                style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '9px',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#333',
-                  marginBottom: '12px',
-                }}
+                className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                style={{ letterSpacing: '0.08em' }}
               >
                 Reply Rate by Step
               </p>
@@ -266,12 +233,12 @@ export default function SequenceSlideOut({
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Sans' }}
+                    tick={{ fill: '#555', fontSize: 13, fontFamily: 'Fira Sans' }}
                     axisLine={{ stroke: '#1c1c1c' }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#555', fontSize: 11, fontFamily: 'IBM Plex Mono' }}
+                    tick={{ fill: '#555', fontSize: 13, fontFamily: 'Fira Code' }}
                     axisLine={{ stroke: '#1c1c1c' }}
                     tickLine={false}
                     unit="%"
@@ -281,10 +248,10 @@ export default function SequenceSlideOut({
                       backgroundColor: '#0f0f0f',
                       border: '1px solid #1c1c1c',
                       borderRadius: '6px',
-                      fontFamily: 'IBM Plex Sans',
-                      fontSize: '12px',
+                      fontFamily: 'Fira Sans',
+                      fontSize: '15px',
                     }}
-                    labelStyle={{ color: '#aaa', fontFamily: 'IBM Plex Mono' }}
+                    labelStyle={{ color: '#aaa', fontFamily: 'Fira Code' }}
                     itemStyle={{ color: '#555' }}
                     formatter={(value, _name, props) => {
                       const p = props?.payload as { severity?: string; stepType?: string } | undefined
@@ -295,7 +262,7 @@ export default function SequenceSlideOut({
                     y={3.5}
                     stroke="#F59E0B"
                     strokeDasharray="4 4"
-                    label={{ value: 'Flag threshold', fill: '#F59E0B', fontSize: 10, fontFamily: 'IBM Plex Mono' }}
+                    label={{ value: 'Flag threshold', fill: '#F59E0B', fontSize: 13, fontFamily: 'Fira Code' }}
                   />
                   <Bar dataKey="replyRate" radius={[4, 4, 0, 0]} isAnimationActive={true}>
                     {chartData.map((entry, index) => (
@@ -314,14 +281,8 @@ export default function SequenceSlideOut({
           {!loadingDetail && detail?.steps && (
             <div className="space-y-2">
               <p
-                style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '9px',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#333',
-                  marginBottom: '8px',
-                }}
+                className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                style={{ letterSpacing: '0.08em' }}
               >
                 Steps
               </p>
@@ -340,13 +301,10 @@ export default function SequenceSlideOut({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span
+                          className="font-mono text-[11px] rounded px-1.5 py-0.5"
                           style={{
-                            fontFamily: 'IBM Plex Mono',
-                            fontSize: '9px',
                             color: '#333',
                             background: '#141414',
-                            padding: '2px 6px',
-                            borderRadius: '3px',
                           }}
                         >
                           {step.step_number}
@@ -354,27 +312,18 @@ export default function SequenceSlideOut({
                         <span style={{ color: '#555' }}>
                           <StepIcon type={step.step_type} />
                         </span>
-                        <span
-                          style={{
-                            fontFamily: 'IBM Plex Sans',
-                            fontSize: '11px',
-                            color: '#888',
-                          }}
-                        >
+                        <span className="font-sans text-[15px] text-[#888]">
                           {step.step_type}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         {step.step_intent && (
                           <span
+                            className="font-mono text-[11px] rounded px-1.5 py-0.5"
                             style={{
-                              fontFamily: 'IBM Plex Mono',
-                              fontSize: '9px',
                               background: '#141414',
                               color: '#555',
                               border: '1px solid #222',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
                             }}
                           >
                             {step.step_intent}
@@ -382,11 +331,8 @@ export default function SequenceSlideOut({
                         )}
                         {flagged ? (
                           <span
+                            className="font-mono text-[13px] rounded px-2 py-0.5"
                             style={{
-                              fontFamily: 'IBM Plex Mono',
-                              fontSize: '10px',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
                               background: '#1a0505',
                               color: '#f87171',
                               border: '1px solid #331010',
@@ -396,11 +342,8 @@ export default function SequenceSlideOut({
                           </span>
                         ) : (
                           <span
+                            className="font-mono text-[13px] rounded px-2 py-0.5"
                             style={{
-                              fontFamily: 'IBM Plex Mono',
-                              fontSize: '10px',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
                               background: '#141414',
                               color: '#555',
                               border: '1px solid #222',
@@ -412,40 +355,16 @@ export default function SequenceSlideOut({
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span
-                        style={{
-                          fontFamily: 'IBM Plex Mono',
-                          fontSize: '18px',
-                          color: '#e5e5e5',
-                        }}
-                      >
+                      <span className="font-mono text-[22px] text-[#e5e5e5]">
                         {fmt(step.reply_rate)}
                       </span>
-                      <span
-                        style={{
-                          fontFamily: 'IBM Plex Mono',
-                          fontSize: '11px',
-                          color: '#555',
-                        }}
-                      >
+                      <span className="font-mono text-[13px] text-[#555]">
                         open {fmt(step.open_rate)}
                       </span>
-                      <span
-                        style={{
-                          fontFamily: 'IBM Plex Mono',
-                          fontSize: '11px',
-                          color: '#555',
-                        }}
-                      >
+                      <span className="font-mono text-[13px] text-[#555]">
                         mtg {fmt(step.meeting_rate)}
                       </span>
-                      <span
-                        style={{
-                          fontFamily: 'IBM Plex Mono',
-                          fontSize: '11px',
-                          color: '#555',
-                        }}
-                      >
+                      <span className="font-mono text-[13px] text-[#555]">
                         {step.send_volume} sends
                       </span>
                       {flagged && (
@@ -455,16 +374,7 @@ export default function SequenceSlideOut({
                       )}
                     </div>
                     {step.subject && (
-                      <p
-                        className="truncate"
-                        style={{
-                          fontFamily: 'IBM Plex Sans',
-                          fontSize: '11px',
-                          color: '#444',
-                          fontStyle: 'italic',
-                          marginTop: '4px',
-                        }}
-                      >
+                      <p className="truncate font-sans text-[15px] italic text-[#444] mt-1">
                         {step.subject}
                       </p>
                     )}

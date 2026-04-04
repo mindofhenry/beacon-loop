@@ -108,22 +108,12 @@ export default function RewriteModal({
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <span
-              style={{
-                fontFamily: 'IBM Plex Sans',
-                fontSize: '13px',
-                fontWeight: 400,
-                color: '#aaa',
-              }}
-            >
+            <span className="font-sans text-[17px] text-[#aaa]">
               {sequenceName} — Step {stepNumber}
             </span>
             <span
+              className="font-mono text-[13px] rounded px-2 py-0.5"
               style={{
-                fontFamily: 'IBM Plex Mono',
-                fontSize: '10px',
-                padding: '2px 8px',
-                borderRadius: '4px',
                 background: '#1a0505',
                 color: '#f87171',
                 border: '1px solid #331010',
@@ -132,13 +122,7 @@ export default function RewriteModal({
               {(healthScore * 100).toFixed(0)}
             </span>
           </div>
-          <span
-            style={{
-              fontFamily: 'IBM Plex Mono',
-              fontSize: '10px',
-              color: '#333',
-            }}
-          >
+          <span className="font-mono text-[13px] text-[#333]">
             {stepType}
           </span>
         </div>
@@ -153,29 +137,18 @@ export default function RewriteModal({
             <div className="h-16 bg-[#1c1c1c] rounded-lg animate-pulse" />
           </div>
         ) : !rewrite ? (
-          /* No rewrite exists — show generate button */
           <div className="flex flex-col items-center gap-4 py-12">
-            <p
-              style={{
-                fontFamily: 'IBM Plex Mono',
-                fontSize: '11px',
-                color: '#333',
-              }}
-            >
+            <p className="font-mono text-[13px] text-[#333]">
               no rewrite suggestion exists for this step yet.
             </p>
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 font-mono text-[13px] rounded-md px-4 py-1.5"
               style={{
-                fontFamily: 'IBM Plex Mono',
-                fontSize: '10px',
                 background: '#0f1729',
                 border: '1px solid #1e3a5f',
                 color: '#3b82f6',
-                padding: '6px 16px',
-                borderRadius: '6px',
               }}
             >
               {generating ? (
@@ -193,40 +166,24 @@ export default function RewriteModal({
               {/* Current */}
               <div>
                 <p
-                  style={{
-                    fontFamily: 'IBM Plex Mono',
-                    fontSize: '9px',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: '#333',
-                    marginBottom: '12px',
-                  }}
+                  className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                  style={{ letterSpacing: '0.08em' }}
                 >
                   Current
                 </p>
                 <div className="mb-3">
                   <p
-                    style={{
-                      fontFamily: 'IBM Plex Mono',
-                      fontSize: '9px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: '#333',
-                      marginBottom: '6px',
-                    }}
+                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    style={{ letterSpacing: '0.08em' }}
                   >
                     Subject
                   </p>
                   <div
+                    className="font-sans text-[15px] italic rounded-md p-3"
                     style={{
                       background: '#0a0a0a',
                       border: '1px solid #1a1a1a',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      fontFamily: 'IBM Plex Sans',
-                      fontSize: '11.5px',
                       color: '#888',
-                      fontStyle: 'italic',
                       minHeight: '40px',
                     }}
                   >
@@ -235,31 +192,19 @@ export default function RewriteModal({
                 </div>
                 <div>
                   <p
-                    style={{
-                      fontFamily: 'IBM Plex Mono',
-                      fontSize: '9px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: '#333',
-                      marginBottom: '6px',
-                    }}
+                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    style={{ letterSpacing: '0.08em' }}
                   >
                     Body
                   </p>
                   <div
+                    className="font-sans text-[15px] italic rounded-md p-3 whitespace-pre-wrap overflow-y-auto"
                     style={{
                       background: '#0a0a0a',
                       border: '1px solid #1a1a1a',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      fontFamily: 'IBM Plex Sans',
-                      fontSize: '11.5px',
                       color: '#888',
-                      fontStyle: 'italic',
                       minHeight: '120px',
                       maxHeight: '250px',
-                      overflowY: 'auto',
-                      whiteSpace: 'pre-wrap',
                     }}
                   >
                     {currentBody ?? rewrite?.current_body ?? '—'}
@@ -270,38 +215,23 @@ export default function RewriteModal({
               {/* Suggested */}
               <div>
                 <p
-                  style={{
-                    fontFamily: 'IBM Plex Mono',
-                    fontSize: '9px',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: '#333',
-                    marginBottom: '12px',
-                  }}
+                  className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                  style={{ letterSpacing: '0.08em' }}
                 >
                   Suggested
                 </p>
                 <div className="mb-3">
                   <p
-                    style={{
-                      fontFamily: 'IBM Plex Mono',
-                      fontSize: '9px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: '#333',
-                      marginBottom: '6px',
-                    }}
+                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    style={{ letterSpacing: '0.08em' }}
                   >
                     Subject
                   </p>
                   <div
+                    className="font-sans text-[15px] rounded-md p-3"
                     style={{
                       background: '#03100a',
                       border: '1px solid #0d3020',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      fontFamily: 'IBM Plex Sans',
-                      fontSize: '11.5px',
                       color: '#aaa',
                       minHeight: '40px',
                     }}
@@ -311,30 +241,19 @@ export default function RewriteModal({
                 </div>
                 <div>
                   <p
-                    style={{
-                      fontFamily: 'IBM Plex Mono',
-                      fontSize: '9px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: '#333',
-                      marginBottom: '6px',
-                    }}
+                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    style={{ letterSpacing: '0.08em' }}
                   >
                     Body
                   </p>
                   <div
+                    className="font-sans text-[15px] rounded-md p-3 whitespace-pre-wrap overflow-y-auto"
                     style={{
                       background: '#03100a',
                       border: '1px solid #0d3020',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      fontFamily: 'IBM Plex Sans',
-                      fontSize: '11.5px',
                       color: '#aaa',
                       minHeight: '120px',
                       maxHeight: '250px',
-                      overflowY: 'auto',
-                      whiteSpace: 'pre-wrap',
                     }}
                   >
                     {rewrite.suggested_body}
@@ -346,11 +265,8 @@ export default function RewriteModal({
             {/* Confidence badge */}
             <div className="mb-4">
               <span
+                className="font-mono text-[13px] rounded px-2 py-0.5"
                 style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '10px',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
                   background: confidenceColor.bg,
                   color: confidenceColor.color,
                   border: `1px solid ${confidenceColor.border}`,
@@ -363,25 +279,12 @@ export default function RewriteModal({
             {/* Diagnosis */}
             <div className="mb-4">
               <p
-                style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '9px',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#333',
-                  marginBottom: '8px',
-                }}
+                className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                style={{ letterSpacing: '0.08em' }}
               >
                 Diagnosis
               </p>
-              <p
-                style={{
-                  fontFamily: 'IBM Plex Sans',
-                  fontSize: '12px',
-                  color: '#aaa',
-                  lineHeight: 1.6,
-                }}
-              >
+              <p className="font-sans text-[17px] text-[#aaa] leading-relaxed">
                 {rewrite.diagnosis}
               </p>
             </div>
@@ -389,34 +292,19 @@ export default function RewriteModal({
             {/* Why This Works */}
             {rewrite.explanation && (
               <div
-                className="mb-6"
+                className="mb-6 p-4 rounded-md"
                 style={{
                   background: '#0f0f0f',
                   border: '1px solid #1c1c1c',
-                  borderRadius: '6px',
-                  padding: '16px',
                 }}
               >
                 <p
-                  style={{
-                    fontFamily: 'IBM Plex Mono',
-                    fontSize: '9px',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: '#333',
-                    marginBottom: '8px',
-                  }}
+                  className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                  style={{ letterSpacing: '0.08em' }}
                 >
                   Why This Works
                 </p>
-                <p
-                  style={{
-                    fontFamily: 'IBM Plex Sans',
-                    fontSize: '12px',
-                    color: '#888',
-                    lineHeight: 1.6,
-                  }}
-                >
+                <p className="font-sans text-[17px] text-[#888] leading-relaxed">
                   {rewrite.explanation}
                 </p>
               </div>
@@ -427,15 +315,11 @@ export default function RewriteModal({
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 font-mono text-[13px] rounded-md px-4 py-1.5"
                 style={{
-                  fontFamily: 'IBM Plex Mono',
-                  fontSize: '10px',
                   background: '#0f1729',
                   border: '1px solid #1e3a5f',
                   color: '#3b82f6',
-                  padding: '6px 16px',
-                  borderRadius: '6px',
                 }}
               >
                 {generating ? (

@@ -630,6 +630,7 @@ def compute_attribution_credit(
     for (opp_id, source, seq_id), grp in opp_tp.groupby(
         ["opportunity_id", "source", "sequence_id"], dropna=False
     ):
+        opp_amount = float(grp["opp_amount"].iloc[0]) if "opp_amount" in grp.columns else None
         entries = []
         for _, tp in grp.iterrows():
             snap_uuid = snap_id_lookup.get((tp["source"], tp["sequence_id"], tp["step_id"]))
@@ -668,6 +669,7 @@ def compute_attribution_credit(
             "opportunity_id": str(opp_id),
             "model_type": "last_touch",
             "credit_fraction": 1.0,
+            "opportunity_amount": opp_amount,
         })
 
         # --- U-shaped ---
@@ -679,6 +681,7 @@ def compute_attribution_credit(
                 "opportunity_id": str(opp_id),
                 "model_type": "u_shaped",
                 "credit_fraction": 1.0,
+                "opportunity_amount": opp_amount,
             })
             continue
 
@@ -692,6 +695,7 @@ def compute_attribution_credit(
                 "opportunity_id": str(opp_id),
                 "model_type": "u_shaped",
                 "credit_fraction": 1.0,
+                "opportunity_amount": opp_amount,
             })
         else:
             credit_map: dict[str, float] = {}
@@ -716,10 +720,11 @@ def compute_attribution_credit(
                     "opportunity_id": str(opp_id),
                     "model_type": "u_shaped",
                     "credit_fraction": round(frac, 4),
+                    "opportunity_amount": opp_amount,
                 })
 
     if not credits:
-        return pd.DataFrame(columns=["step_id", "opportunity_id", "model_type", "credit_fraction"])
+        return pd.DataFrame(columns=["step_id", "opportunity_id", "model_type", "credit_fraction", "opportunity_amount"])
     return pd.DataFrame(credits)
 
 
