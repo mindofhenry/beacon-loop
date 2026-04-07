@@ -56,24 +56,24 @@ export default function AskBeaconModal() {
           width: '52px',
           height: '52px',
           borderRadius: '50%',
-          border: '1px solid #252525',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          color: '#3b82f6',
+          border: '2px solid #1A1A1A',
+          background: '#FFFFFF',
+          color: '#2563EB',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
           zIndex: 40,
-          boxShadow: '0 4px 20px rgba(59, 130, 246, 0.15)',
+          boxShadow: '4px 4px 0px #1A1A1A',
           transition: 'transform 150ms ease, box-shadow 150ms ease',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.08)'
-          e.currentTarget.style.boxShadow = '0 6px 28px rgba(59, 130, 246, 0.25)'
+          e.currentTarget.style.transform = 'translate(-2px, -2px)'
+          e.currentTarget.style.boxShadow = '6px 6px 0px #1A1A1A'
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)'
-          e.currentTarget.style.boxShadow = '0 4px 20px rgba(59, 130, 246, 0.15)'
+          e.currentTarget.style.transform = 'translate(0, 0)'
+          e.currentTarget.style.boxShadow = '4px 4px 0px #1A1A1A'
         }}
       >
         <Sparkles size={22} />
@@ -97,8 +97,7 @@ export default function AskBeaconModal() {
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
-              backdropFilter: 'blur(4px)',
+              background: 'rgba(0, 0, 0, 0.3)',
             }}
           />
 
@@ -109,13 +108,13 @@ export default function AskBeaconModal() {
               width: '520px',
               maxWidth: 'calc(100vw - 48px)',
               maxHeight: 'calc(100vh - 96px)',
-              background: '#0c0c0c',
-              border: '1px solid #1c1c1c',
+              background: '#FFFFFF',
+              border: '2px solid #1A1A1A',
               borderRadius: '12px',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              boxShadow: '8px 8px 0px #1A1A1A',
               animation: 'modalSlideUp 200ms ease-out',
             }}
           >
@@ -126,12 +125,12 @@ export default function AskBeaconModal() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '16px 20px',
-                borderBottom: '1px solid #1c1c1c',
+                borderBottom: '2px solid #1A1A1A',
               }}
             >
               <div className="flex items-center gap-2">
-                <Sparkles size={16} style={{ color: '#3b82f6' }} />
-                <span className="font-sans text-[17px] font-medium" style={{ color: '#e5e5e5' }}>
+                <Sparkles size={16} style={{ color: '#2563EB' }} />
+                <span className="font-sans text-[17px] font-medium" style={{ color: '#1A1A1A' }}>
                   Ask Beacon
                 </span>
               </div>
@@ -140,7 +139,7 @@ export default function AskBeaconModal() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#555',
+                  color: '#737373',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

@@ -45,14 +45,14 @@ function MetricCard({
   valueClassName?: string
 }) {
   return (
-    <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-4">
+    <div className="bg-[#FFFFFF] border-2 border-[#1A1A1A] rounded-lg p-4" style={{ boxShadow: '4px 4px 0px #1A1A1A' }}>
       <p
-        className="font-mono text-[9px] uppercase text-[#333] mb-2"
+        className="font-mono text-[9px] uppercase text-[#A3A3A3] mb-2"
         style={{ letterSpacing: '0.08em' }}
       >
         {label}
       </p>
-      <p className={`font-mono text-xl font-medium ${valueClassName ?? 'text-[#aaa]'}`}>{value}</p>
+      <p className={`font-mono text-xl font-medium ${valueClassName ?? 'text-[#525252]'}`}>{value}</p>
     </div>
   )
 }
@@ -65,14 +65,14 @@ function MetricCardSmall({
   value: string
 }) {
   return (
-    <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-4">
+    <div className="bg-[#FFFFFF] border-2 border-[#1A1A1A] rounded-lg p-4" style={{ boxShadow: '4px 4px 0px #1A1A1A' }}>
       <p
-        className="font-mono text-[9px] uppercase text-[#333] mb-2"
+        className="font-mono text-[9px] uppercase text-[#A3A3A3] mb-2"
         style={{ letterSpacing: '0.08em' }}
       >
         {label}
       </p>
-      <p className="font-mono text-sm text-[#aaa]">{value}</p>
+      <p className="font-mono text-sm text-[#525252]">{value}</p>
     </div>
   )
 }
@@ -129,7 +129,7 @@ export default function StepPage({
     <div className="max-w-7xl mx-auto px-6 py-8">
       <Link
         href={backHref}
-        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#333] hover:text-[#888] transition-colors duration-150 cursor-pointer mb-6"
+        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#A3A3A3] hover:text-[#525252] transition-colors duration-150 cursor-pointer mb-6"
       >
         <ChevronLeft size={12} />
         {backLabel}
@@ -137,15 +137,15 @@ export default function StepPage({
 
       {loading && (
         <>
-          <div className="h-8 w-48 bg-[#1c1c1c] rounded animate-pulse mb-6" />
+          <div className="h-8 w-48 bg-[#E5E5E5] rounded animate-pulse mb-6" />
           <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-16 bg-[#1c1c1c] rounded animate-pulse" />
+              <div key={i} className="h-16 bg-[#E5E5E5] rounded animate-pulse" />
             ))}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-40 bg-[#1c1c1c] rounded animate-pulse" />
-            <div className="h-40 bg-[#1c1c1c] rounded animate-pulse" />
+            <div className="h-40 bg-[#E5E5E5] rounded animate-pulse" />
+            <div className="h-40 bg-[#E5E5E5] rounded animate-pulse" />
           </div>
         </>
       )}
@@ -157,7 +157,7 @@ export default function StepPage({
       {!loading && !error && metrics && (
         <>
           <p
-            className="font-sans text-[13px] font-normal text-[#aaa] mb-6"
+            className="font-sans text-[13px] font-normal text-[#525252] mb-6"
             style={{ letterSpacing: '0.04em' }}
           >
             step {metrics.step_number}
@@ -170,7 +170,7 @@ export default function StepPage({
             <MetricCard
               label="Reply Rate"
               value={fmt(metrics.reply_rate)}
-              valueClassName={metrics.flag_type !== 'none' ? 'text-[#f87171]' : undefined}
+              valueClassName={metrics.flag_type !== 'none' ? 'text-[#DC2626]' : undefined}
             />
             <MetricCard label="Open Rate" value={fmt(metrics.open_rate)} />
             <MetricCardSmall label="Flag Type" value={metrics.flag_type} />
@@ -178,56 +178,56 @@ export default function StepPage({
 
           {suggestion ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-5">
+              <div className="bg-[#FFFFFF] border-2 border-[#1A1A1A] rounded-lg p-5">
                 <p
-                  className="font-mono text-[9px] uppercase text-[#333] mb-3"
+                  className="font-mono text-[9px] uppercase text-[#A3A3A3] mb-3"
                   style={{ letterSpacing: '0.08em' }}
                 >
                   Diagnosis
                 </p>
-                <p className="font-sans text-[12px] text-[#aaa] whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
+                <p className="font-sans text-[12px] text-[#525252] whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
                   {suggestion.diagnosis}
                 </p>
               </div>
 
               <div
-                className="bg-[#0f0f0f] rounded-lg p-5"
-                style={{ border: '1px solid #2a1515' }}
+                className="bg-[#FFFFFF] rounded-lg p-5"
+                style={{ border: '2px solid #DC2626' }}
               >
                 <p
-                  className="font-mono text-[9px] uppercase text-[#333] mb-3"
+                  className="font-mono text-[9px] uppercase text-[#A3A3A3] mb-3"
                   style={{ letterSpacing: '0.08em' }}
                 >
                   Suggested Rewrite
                 </p>
                 <div className="mb-4">
                   <p
-                    className="font-mono text-[9px] uppercase text-[#333] mb-1"
+                    className="font-mono text-[9px] uppercase text-[#A3A3A3] mb-1"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Subject
                   </p>
-                  <p className="font-mono text-sm text-[#aaa]">{suggestion.suggested_subject}</p>
+                  <p className="font-mono text-sm text-[#525252]">{suggestion.suggested_subject}</p>
                 </div>
                 <div>
                   <p
-                    className="font-mono text-[9px] uppercase text-[#333] mb-1"
+                    className="font-mono text-[9px] uppercase text-[#A3A3A3] mb-1"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Body
                   </p>
-                  <p className="font-sans text-[12px] text-[#aaa] whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
+                  <p className="font-sans text-[12px] text-[#525252] whitespace-pre-wrap" style={{ lineHeight: '1.6' }}>
                     {suggestion.suggested_body}
                   </p>
                 </div>
-                <p className="font-mono text-[10px] text-[#333] mt-4" style={{ letterSpacing: '0.04em' }}>
+                <p className="font-mono text-[10px] text-[#A3A3A3] mt-4" style={{ letterSpacing: '0.04em' }}>
                   {suggestion.model_used} · {new Date(suggestion.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
           ) : (
-            <div className="bg-[#0f0f0f] border border-[#1c1c1c] rounded-lg p-8 flex items-center justify-center">
-              <p className="font-mono text-[11px] text-[#333]" style={{ letterSpacing: '0.04em' }}>
+            <div className="bg-[#FFFFFF] border-2 border-[#1A1A1A] rounded-lg p-8 flex items-center justify-center">
+              <p className="font-mono text-[11px] text-[#A3A3A3]" style={{ letterSpacing: '0.04em' }}>
                 no rewrite suggestion generated yet
               </p>
             </div>
@@ -236,7 +236,7 @@ export default function StepPage({
       )}
 
       {!loading && !error && !metrics && (
-        <p className="font-sans text-sm text-[#555]">Step not found.</p>
+        <p className="font-sans text-sm text-[#737373]">Step not found.</p>
       )}
     </div>
   )

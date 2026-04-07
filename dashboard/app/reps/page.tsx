@@ -58,9 +58,9 @@ function fmt(rate: number | null): string {
 }
 
 function healthColor(score: number): string {
-  if (score >= 70) return '#22c55e'
-  if (score >= 40) return '#f59e0b'
-  return '#f87171'
+  if (score >= 70) return '#16A34A'
+  if (score >= 40) return '#F59E0B'
+  return '#DC2626'
 }
 
 function seqSource(sequenceId: string): 'Outreach' | 'Salesloft' {
@@ -72,9 +72,9 @@ function toggleStyle(active: boolean): React.CSSProperties {
     fontSize: '13px',
     padding: '4px 10px',
     borderRadius: '4px',
-    border: active ? '1px solid #252525' : '1px solid transparent',
-    background: active ? '#161616' : 'transparent',
-    color: active ? '#e5e5e5' : '#444',
+    border: active ? '2px solid #1A1A1A' : '2px solid #D4D4D4',
+    background: active ? '#1A1A1A' : '#FFFFFF',
+    color: active ? '#FFFFFF' : '#525252',
     cursor: 'pointer',
     transition: 'background 150ms ease, border-color 150ms ease, color 150ms ease',
   }
@@ -182,7 +182,7 @@ function SourceBadge({ source }: { source: 'Outreach' | 'Salesloft' | 'Mixed' })
   if (source === 'Mixed') {
     return (
       <span className="font-mono text-[13px] px-2 py-0.5 rounded"
-        style={{ background: '#141414', color: '#555', border: '1px solid #222' }}>
+        style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}>
         OR/SL
       </span>
     )
@@ -191,8 +191,8 @@ function SourceBadge({ source }: { source: 'Outreach' | 'Salesloft' | 'Mixed' })
   return (
     <span className="font-mono text-[13px] px-2 py-0.5 rounded"
       style={isOR
-        ? { background: '#0d1526', color: '#3b82f6', border: '1px solid #1a2d4a' }
-        : { background: '#141414', color: '#555', border: '1px solid #222' }
+        ? { background: '#DBEAFE', color: '#2563EB', border: '1px solid #2563EB' }
+        : { background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }
       }>
       {isOR ? 'OR' : 'SL'}
     </span>
@@ -203,7 +203,7 @@ function HealthBar({ score }: { score: number }) {
   const color = healthColor(score)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-      <div style={{ width: '72px', height: '4px', background: '#1c1c1c', borderRadius: '2px', overflow: 'hidden' }}>
+      <div style={{ width: '72px', height: '4px', background: '#E5E5E5', borderRadius: '2px', overflow: 'hidden' }}>
         <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: '2px', transition: 'width 300ms ease' }} />
       </div>
       <span className="font-mono text-[13px]" style={{ color, minWidth: '28px', textAlign: 'right' }}>
@@ -215,18 +215,18 @@ function HealthBar({ score }: { score: number }) {
 
 function TrendArrow() {
   // Trend requires multi-run comparison data — showing flat for now
-  return <Minus size={14} style={{ color: '#333' }} />
+  return <Minus size={14} style={{ color: '#A3A3A3' }} />
 }
 
 function MetricValue({ rep, metric }: { rep: RepAgg; metric: LeaderboardMetric }) {
   switch (metric) {
     case 'reply_rate':
-      return <span className="font-mono text-[17px] text-[#aaa]">{fmt(rep.avg_reply_rate)}</span>
+      return <span className="font-mono text-[17px] text-[#525252]">{fmt(rep.avg_reply_rate)}</span>
     case 'pipeline':
-      return <span className="font-mono text-[17px] text-[#aaa]">{rep.pipeline_influenced} opps</span>
+      return <span className="font-mono text-[17px] text-[#525252]">{rep.pipeline_influenced} opps</span>
     case 'flagged':
       return (
-        <span className="font-mono text-[17px]" style={{ color: rep.flagged_count > 0 ? '#f87171' : '#555' }}>
+        <span className="font-mono text-[17px]" style={{ color: rep.flagged_count > 0 ? '#DC2626' : '#737373' }}>
           {rep.flagged_count} flagged
         </span>
       )
@@ -240,14 +240,14 @@ function LeaderboardCard({ rep, metric, onClick }: { rep: RepAgg; metric: Leader
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         width: '100%', padding: '12px 16px', background: 'transparent',
-        border: 'none', borderBottom: '1px solid #1a1a1a', cursor: 'pointer',
+        border: 'none', borderBottom: '1px solid #E5E5E5', cursor: 'pointer',
         textAlign: 'left', transition: 'background 150ms ease',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = '#0f0f0f' }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F5F5' }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span className="font-sans text-[17px] text-[#ccc]">{rep.name}</span>
+        <span className="font-sans text-[17px] text-[#1A1A1A]">{rep.name}</span>
         <SourceBadge source={rep.source} />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -296,7 +296,7 @@ function Leaderboard({
     <div>
       {/* Metric selector */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '16px' }}>
-        <span className="font-mono text-[11px] uppercase text-[#333]"
+        <span className="font-mono text-[11px] uppercase text-[#A3A3A3]"
           style={{ letterSpacing: '0.08em', marginRight: '4px' }}>
           Rank by
         </span>
@@ -310,9 +310,9 @@ function Leaderboard({
       {/* Two columns */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         {/* Top Performers */}
-        <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #1c1c1c', background: '#0a0a0a' }}>
-            <span className="font-mono text-[11px] uppercase text-[#22c55e]"
+        <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
+          <div style={{ padding: '12px 16px', borderBottom: '2px solid #1A1A1A', background: '#F5F5F5' }}>
+            <span className="font-mono text-[11px] uppercase text-[#16A34A]"
               style={{ letterSpacing: '0.08em' }}>
               Top Performers
             </span>
@@ -323,9 +323,9 @@ function Leaderboard({
         </div>
 
         {/* Needs Attention */}
-        <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #1c1c1c', background: '#0a0a0a' }}>
-            <span className="font-mono text-[11px] uppercase text-[#f87171]"
+        <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
+          <div style={{ padding: '12px 16px', borderBottom: '2px solid #1A1A1A', background: '#F5F5F5' }}>
+            <span className="font-mono text-[11px] uppercase text-[#DC2626]"
               style={{ letterSpacing: '0.08em' }}>
               Needs Attention
             </span>
@@ -355,14 +355,14 @@ function TeamTable({ reps, onRepClick }: { reps: RepAgg[]; onRepClick: (repId: n
       }))
   }, [reps])
 
-  const thStyle = "font-mono text-[9px] uppercase text-[#333]"
+  const thStyle = "font-mono text-[9px] uppercase text-[#A3A3A3]"
   const thLetterSpacing = { letterSpacing: '0.08em' } as const
 
   return (
-    <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
+    <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="bg-[#0a0a0a] border-b border-[#1c1c1c] sticky top-0">
+          <tr className="bg-[#F5F5F5] border-b-2 border-[#1A1A1A] sticky top-0">
             <th className="text-left px-4 py-3">
               <span className={thStyle} style={thLetterSpacing}>Rep</span>
             </th>
@@ -404,12 +404,12 @@ function TeamGroup({ team, members, onRepClick }: { team: string; members: RepAg
     <>
       {/* Team header row */}
       <tr>
-        <td colSpan={8} style={{ padding: '10px 16px', background: '#0d0d0d', borderBottom: '1px solid #1c1c1c' }}>
-          <span className="font-mono text-[11px] uppercase text-[#555]"
+        <td colSpan={8} style={{ padding: '10px 16px', background: '#F5F5F5', borderBottom: '1px solid #E5E5E5' }}>
+          <span className="font-mono text-[11px] uppercase text-[#737373]"
             style={{ letterSpacing: '0.08em' }}>
             {team}
           </span>
-          <span className="font-mono text-[11px] text-[#333] ml-2">
+          <span className="font-mono text-[11px] text-[#A3A3A3] ml-2">
             ({members.length})
           </span>
         </td>
@@ -418,30 +418,30 @@ function TeamGroup({ team, members, onRepClick }: { team: string; members: RepAg
         <tr
           key={rep.rep_id}
           onClick={() => onRepClick(rep.rep_id)}
-          className="border-b border-b-[#1a1a1a] cursor-pointer transition-colors duration-150 hover:bg-[#0f0f0f]"
+          className="border-b border-b-[#E5E5E5] cursor-pointer transition-colors duration-150 hover:bg-[#F5F5F5]"
         >
           <td className="px-4 py-3.5">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="font-sans text-[17px] text-[#aaa]">{rep.name}</span>
+              <span className="font-sans text-[17px] text-[#525252]">{rep.name}</span>
               <SourceBadge source={rep.source} />
             </div>
           </td>
           <td className="px-4 py-3.5 text-right">
-            <span className="font-mono text-[17px] text-[#aaa]">{rep.active_sequences}</span>
+            <span className="font-mono text-[17px] text-[#525252]">{rep.active_sequences}</span>
           </td>
           <td className="px-4 py-3.5 text-right">
-            <span className="font-mono text-[17px] text-[#aaa]">{fmt(rep.avg_reply_rate)}</span>
+            <span className="font-mono text-[17px] text-[#525252]">{fmt(rep.avg_reply_rate)}</span>
           </td>
           <td className="px-4 py-3.5 text-right">
-            <span className="font-mono text-[17px] text-[#aaa]">{fmt(rep.avg_open_rate)}</span>
+            <span className="font-mono text-[17px] text-[#525252]">{fmt(rep.avg_open_rate)}</span>
           </td>
           <td className="px-4 py-3.5 text-right">
-            <span className="font-mono text-[17px]" style={{ color: rep.flagged_count > 0 ? '#f87171' : '#555' }}>
+            <span className="font-mono text-[17px]" style={{ color: rep.flagged_count > 0 ? '#DC2626' : '#737373' }}>
               {rep.flagged_count}
             </span>
           </td>
           <td className="px-4 py-3.5 text-right">
-            <span className="font-mono text-[17px] text-[#aaa]">{rep.pipeline_influenced}</span>
+            <span className="font-mono text-[17px] text-[#525252]">{rep.pipeline_influenced}</span>
           </td>
           <td className="px-4 py-3.5">
             <HealthBar score={rep.health} />
@@ -514,7 +514,7 @@ export default function RepsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="font-sans text-[24px] font-semibold text-[#e5e5e5] mb-6">
+      <h1 className="font-sans text-[24px] font-semibold text-[#1A1A1A] mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
         Reps
       </h1>
 
@@ -522,7 +522,7 @@ export default function RepsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
         <TimeFilter value={timeFilter} onChange={setTimeFilter} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span className="font-mono text-[11px] uppercase text-[#333]"
+          <span className="font-mono text-[11px] uppercase text-[#A3A3A3]"
             style={{ letterSpacing: '0.08em', marginRight: '4px' }}>
             Source
           </span>
@@ -539,13 +539,13 @@ export default function RepsPage() {
       {loading && (
         <div className="space-y-2">
           {['w-full', 'w-11/12', 'w-full', 'w-10/12', 'w-full'].map((w, i) => (
-            <div key={i} className={`h-12 bg-[#1c1c1c] rounded animate-pulse ${w}`} />
+            <div key={i} className={`h-12 bg-[#E5E5E5] rounded animate-pulse ${w}`} />
           ))}
         </div>
       )}
 
       {!loading && !error && visibleReps.length === 0 && (
-        <p className="font-sans text-[17px] text-[#555] py-8 text-center">
+        <p className="font-sans text-[17px] text-[#737373] py-8 text-center">
           No reps match the current filters.
         </p>
       )}
@@ -562,7 +562,7 @@ export default function RepsPage() {
 
           {/* Team Table */}
           <div>
-            <h2 className="font-sans text-[19px] font-semibold text-[#e5e5e5] mb-4">
+            <h2 className="font-sans text-[19px] font-semibold text-[#1A1A1A] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Team View
             </h2>
             <TeamTable reps={visibleReps} onRepClick={handleRepClick} />

@@ -101,12 +101,12 @@ function severityFromConfidence(confidence: number | null): 'high' | 'medium' | 
 }
 
 const severityColors: Record<string, { bg: string; color: string; border: string }> = {
-  high: { bg: '#1a0505', color: '#f87171', border: '#331010' },
-  medium: { bg: '#1a1200', color: '#fbbf24', border: '#332400' },
-  low: { bg: '#141414', color: '#555', border: '#222' },
+  high: { bg: '#FEE2E2', color: '#DC2626', border: '#DC2626' },
+  medium: { bg: '#FEF3C7', color: '#F59E0B', border: '#F59E0B' },
+  low: { bg: '#F5F5F5', color: '#737373', border: '#D4D4D4' },
 }
 
-const themeColors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444']
+const themeColors = ['#2563EB', '#16A34A', '#F59E0B', '#7C3AED', '#DC2626']
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────
 
@@ -114,25 +114,26 @@ function KpiCard({ label, value, subLabel }: { label: string; value: string; sub
   return (
     <div
       style={{
-        background: '#0f0f0f',
-        border: '1px solid #1c1c1c',
+        background: '#FFFFFF',
+        border: '2px solid #1A1A1A',
         borderRadius: '7px',
         padding: '10px 12px',
+        boxShadow: '4px 4px 0px #1A1A1A',
       }}
     >
       <div
         className="font-mono text-[11px] uppercase"
-        style={{ letterSpacing: '0.08em', color: '#3a3a3a', marginBottom: '5px' }}
+        style={{ letterSpacing: '0.08em', color: '#737373', marginBottom: '5px' }}
       >
         {label}
       </div>
       <div
         className="font-mono text-[29px] font-medium"
-        style={{ color: '#e5e5e5', letterSpacing: '-0.02em' }}
+        style={{ color: '#1A1A1A', letterSpacing: '-0.02em' }}
       >
         {value}
       </div>
-      <div className="font-mono text-[11px]" style={{ color: '#333', marginTop: '3px' }}>
+      <div className="font-mono text-[11px]" style={{ color: '#A3A3A3', marginTop: '3px' }}>
         {subLabel}
       </div>
     </div>
@@ -144,10 +145,10 @@ function KpiCard({ label, value, subLabel }: { label: string; value: string; sub
 function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <span style={{ color: '#444' }}>{icon}</span>
+      <span style={{ color: '#737373' }}>{icon}</span>
       <span
         className="font-mono text-[11px] uppercase"
-        style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+        style={{ letterSpacing: '0.08em', color: '#737373' }}
       >
         {label}
       </span>
@@ -426,15 +427,15 @@ export default function OverviewPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="font-sans text-[24px] font-semibold text-[#e5e5e5] mb-4">Overview</h1>
-        <div className="border-b border-[#1c1c1c] mb-6" />
+        <h1 className="font-sans text-[24px] font-semibold text-[#1A1A1A] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Overview</h1>
+        <div className="border-b border-[#E5E5E5] mb-6" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-20 bg-[#1c1c1c] rounded-lg animate-pulse" />
+            <div key={i} className="h-20 bg-[#E5E5E5] rounded-lg animate-pulse" />
           ))}
         </div>
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={20} className="animate-spin" style={{ color: '#333' }} />
+          <Loader2 size={20} className="animate-spin" style={{ color: '#A3A3A3' }} />
         </div>
       </div>
     )
@@ -443,11 +444,11 @@ export default function OverviewPage() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Page title */}
-      <h1 className="font-sans text-[24px] font-semibold text-[#e5e5e5] mb-1">Overview</h1>
-      <p className="font-sans text-[15px] mb-4" style={{ color: '#555' }}>
+      <h1 className="font-sans text-[24px] font-semibold text-[#1A1A1A] mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Overview</h1>
+      <p className="font-sans text-[15px] mb-4" style={{ color: '#737373' }}>
         {greeting[role]}
       </p>
-      <div className="border-b border-[#1c1c1c] mb-6" />
+      <div className="border-b border-[#E5E5E5] mb-6" />
 
       {/* ── KPI Cards (all roles) ── */}
       {kpis && (
@@ -482,10 +483,10 @@ export default function OverviewPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Zap size={15} style={{ color: '#f59e0b' }} />
+                <Zap size={15} style={{ color: '#F59E0B' }} />
                 <span
                   className="font-mono text-[11px] uppercase"
-                  style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+                  style={{ letterSpacing: '0.08em', color: '#737373' }}
                 >
                   Quick Actions
                 </span>
@@ -496,9 +497,9 @@ export default function OverviewPage() {
                 className="flex items-center gap-1.5 font-mono text-[11px] uppercase px-2.5 py-1 rounded transition-colors duration-150"
                 style={{
                   letterSpacing: '0.06em',
-                  color: quickActionsLoading ? '#333' : '#555',
-                  background: '#0f0f0f',
-                  border: '1px solid #1c1c1c',
+                  color: quickActionsLoading ? '#A3A3A3' : '#737373',
+                  background: '#FFFFFF',
+                  border: '2px solid #1A1A1A',
                   cursor: quickActionsLoading ? 'default' : 'pointer',
                 }}
               >
@@ -513,7 +514,7 @@ export default function OverviewPage() {
                   <div
                     key={i}
                     className="h-14 rounded-lg animate-pulse"
-                    style={{ background: '#111', border: '1px solid #1c1c1c' }}
+                    style={{ background: '#F5F5F5', border: '2px solid #1A1A1A' }}
                   />
                 ))}
               </div>
@@ -524,18 +525,18 @@ export default function OverviewPage() {
                     key={i}
                     onClick={() => router.push('/insights')}
                     className="w-full text-left rounded-lg px-4 py-3 transition-colors duration-100"
-                    style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#252525' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1c1c1c' }}
+                    style={{ background: '#FFFFFF', border: '2px solid #1A1A1A', boxShadow: '4px 4px 0px #1A1A1A' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1A1A1A' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1A1A1A' }}
                   >
                     <div className="flex items-start gap-3">
                       <span
                         className="font-mono text-[13px] font-medium mt-0.5 shrink-0"
-                        style={{ color: '#f59e0b' }}
+                        style={{ color: '#F59E0B' }}
                       >
                         {i + 1}.
                       </span>
-                      <span className="font-sans text-[15px] text-[#ccc] leading-relaxed">
+                      <span className="font-sans text-[15px] text-[#1A1A1A] leading-relaxed">
                         {action}
                       </span>
                     </div>
@@ -545,9 +546,9 @@ export default function OverviewPage() {
             ) : (
               <div
                 className="rounded-lg p-4 text-center"
-                style={{ background: '#0c0c0c', border: '1px dashed #1c1c1c' }}
+                style={{ background: '#FFFFFF', border: '2px dashed #1A1A1A' }}
               >
-                <p className="font-sans text-[15px]" style={{ color: '#444' }}>
+                <p className="font-sans text-[15px]" style={{ color: '#737373' }}>
                   Click refresh to generate coaching recommendations
                 </p>
               </div>
@@ -559,16 +560,16 @@ export default function OverviewPage() {
           {coachingQueue.length > 0 ? (
             <div
               className="rounded-lg overflow-hidden mb-6"
-              style={{ border: '1px solid #1c1c1c' }}
+              style={{ border: '2px solid #1A1A1A' }}
             >
               <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#0f0f0f' }}>
+                  <tr style={{ background: '#FFFFFF' }}>
                     {['Rep', 'Team', 'Flagged Steps', 'Worst Step', 'Reply Rate'].map((h) => (
                       <th
                         key={h}
                         className="font-mono text-[11px] uppercase text-left px-4 py-3"
-                        style={{ letterSpacing: '0.08em', color: '#3a3a3a', borderBottom: '1px solid #1c1c1c' }}
+                        style={{ letterSpacing: '0.08em', color: '#737373', borderBottom: '1px solid #E5E5E5' }}
                       >
                         {h}
                       </th>
@@ -580,29 +581,29 @@ export default function OverviewPage() {
                     <tr
                       key={row.repId}
                       className="cursor-pointer transition-colors duration-100"
-                      style={{ borderBottom: '1px solid #141414' }}
+                      style={{ borderBottom: '1px solid #E5E5E5' }}
                       onClick={() => router.push('/insights')}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = '#111' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F5F5' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <td className="px-4 py-3 font-sans text-[15px] text-[#e5e5e5]">
+                      <td className="px-4 py-3 font-sans text-[15px] text-[#1A1A1A]">
                         {row.repName}
                       </td>
-                      <td className="px-4 py-3 font-mono text-[13px] text-[#555]">
+                      <td className="px-4 py-3 font-mono text-[13px] text-[#737373]">
                         {row.team}
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className="font-mono text-[15px] font-medium"
-                          style={{ color: row.flaggedCount >= 15 ? '#f87171' : row.flaggedCount >= 10 ? '#fbbf24' : '#888' }}
+                          style={{ color: row.flaggedCount >= 15 ? '#DC2626' : row.flaggedCount >= 10 ? '#F59E0B' : '#525252' }}
                         >
                           {row.flaggedCount}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-sans text-[13px] text-[#888]" style={{ maxWidth: '260px' }}>
+                      <td className="px-4 py-3 font-sans text-[13px] text-[#525252]" style={{ maxWidth: '260px' }}>
                         <span className="truncate block">{row.worstStepLabel}</span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-[15px]" style={{ color: '#f87171' }}>
+                      <td className="px-4 py-3 font-mono text-[15px]" style={{ color: '#DC2626' }}>
                         {fmt(row.worstReplyRate)}
                       </td>
                     </tr>
@@ -611,7 +612,7 @@ export default function OverviewPage() {
               </table>
             </div>
           ) : (
-            <p className="font-sans text-[15px] text-[#555] mb-6">No flagged steps found.</p>
+            <p className="font-sans text-[15px] text-[#737373] mb-6">No flagged steps found.</p>
           )}
         </>
       )}
@@ -623,7 +624,7 @@ export default function OverviewPage() {
           {themeData.length > 0 ? (
             <div
               className="rounded-lg p-5 mb-6"
-              style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+              style={{ background: '#FFFFFF', border: '2px solid #1A1A1A' }}
             >
               <ResponsiveContainer width="100%" height={Math.max(200, themeData.length * 52)}>
                 <BarChart
@@ -637,8 +638,8 @@ export default function OverviewPage() {
                 >
                   <XAxis
                     type="number"
-                    tick={{ fill: '#555', fontSize: 13, fontFamily: 'Fira Code' }}
-                    axisLine={{ stroke: '#1c1c1c' }}
+                    tick={{ fill: '#737373', fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}
+                    axisLine={{ stroke: '#E5E5E5' }}
                     tickLine={false}
                     tickFormatter={(v: number) => fmtPipeline(v)}
                   />
@@ -646,19 +647,19 @@ export default function OverviewPage() {
                     type="category"
                     dataKey="name"
                     width={140}
-                    tick={{ fill: '#888', fontSize: 13, fontFamily: 'Fira Code' }}
-                    axisLine={{ stroke: '#1c1c1c' }}
+                    tick={{ fill: '#525252', fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}
+                    axisLine={{ stroke: '#E5E5E5' }}
                     tickLine={false}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#111111',
-                      border: '1px solid #1c1c1c',
+                      backgroundColor: '#FFFFFF',
+                      border: '2px solid #1A1A1A',
                       borderRadius: '8px',
-                      fontFamily: 'Fira Sans',
+                      fontFamily: "'Satoshi', sans-serif",
                       fontSize: '15px',
                     }}
-                    labelStyle={{ color: '#f1f5f9', fontFamily: 'Fira Code' }}
+                    labelStyle={{ color: '#1A1A1A', fontFamily: "'JetBrains Mono', monospace" }}
                     formatter={(value, _name, props) => {
                       const v = Number(value) || 0
                       const p = props?.payload as { steps?: number } | undefined
@@ -674,17 +675,17 @@ export default function OverviewPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="font-sans text-[15px] text-[#555] mb-6">No messaging theme data found.</p>
+            <p className="font-sans text-[15px] text-[#737373] mb-6">No messaging theme data found.</p>
           )}
 
           {/* Org Intelligence — live LLM section */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Sparkles size={15} style={{ color: '#8b5cf6' }} />
+                <Sparkles size={15} style={{ color: '#7C3AED' }} />
                 <span
                   className="font-mono text-[11px] uppercase"
-                  style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+                  style={{ letterSpacing: '0.08em', color: '#737373' }}
                 >
                   Org Intelligence
                 </span>
@@ -695,9 +696,9 @@ export default function OverviewPage() {
                 className="flex items-center gap-1.5 font-mono text-[11px] uppercase px-2.5 py-1 rounded transition-colors duration-150"
                 style={{
                   letterSpacing: '0.06em',
-                  color: orgIntelLoading ? '#333' : '#555',
-                  background: '#0f0f0f',
-                  border: '1px solid #1c1c1c',
+                  color: orgIntelLoading ? '#A3A3A3' : '#737373',
+                  background: '#FFFFFF',
+                  border: '2px solid #1A1A1A',
                   cursor: orgIntelLoading ? 'default' : 'pointer',
                 }}
               >
@@ -712,7 +713,7 @@ export default function OverviewPage() {
                   <div
                     key={i}
                     className="h-24 rounded-lg animate-pulse"
-                    style={{ background: '#111', border: '1px solid #1c1c1c' }}
+                    style={{ background: '#F5F5F5', border: '2px solid #1A1A1A' }}
                   />
                 ))}
               </div>
@@ -722,24 +723,24 @@ export default function OverviewPage() {
                   <div
                     key={i}
                     className="rounded-lg px-4 py-3"
-                    style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+                    style={{ background: '#FFFFFF', border: '2px solid #1A1A1A' }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
                         <span
                           className="font-mono text-[13px] font-medium mt-0.5 shrink-0"
-                          style={{ color: '#8b5cf6' }}
+                          style={{ color: '#7C3AED' }}
                         >
                           {i + 1}.
                         </span>
-                        <p className="font-sans text-[15px] text-[#ccc] leading-relaxed">
+                        <p className="font-sans text-[15px] text-[#1A1A1A] leading-relaxed">
                           {rec}
                         </p>
                       </div>
                       <button
                         onClick={() => handleCopy(rec, i)}
                         className="shrink-0 p-1.5 rounded transition-colors duration-150"
-                        style={{ color: copiedIdx === i ? '#22c55e' : '#444', background: 'transparent' }}
+                        style={{ color: copiedIdx === i ? '#16A34A' : '#737373', background: 'transparent' }}
                         title="Copy to clipboard"
                       >
                         {copiedIdx === i ? <Check size={14} /> : <Copy size={14} />}
@@ -751,9 +752,9 @@ export default function OverviewPage() {
             ) : (
               <div
                 className="rounded-lg p-4 text-center"
-                style={{ background: '#0c0c0c', border: '1px dashed #1c1c1c' }}
+                style={{ background: '#FFFFFF', border: '2px dashed #1A1A1A' }}
               >
-                <p className="font-sans text-[15px]" style={{ color: '#444' }}>
+                <p className="font-sans text-[15px]" style={{ color: '#737373' }}>
                   Click refresh to generate strategic recommendations
                 </p>
               </div>
@@ -781,18 +782,19 @@ export default function OverviewPage() {
                     onClick={() => openDrawer(step.stepId)}
                     className="w-full text-left rounded-lg p-4 transition-colors duration-100 cursor-pointer"
                     style={{
-                      background: '#0f0f0f',
-                      border: '1px solid #1c1c1c',
+                      background: '#FFFFFF',
+                      border: '2px solid #1A1A1A',
+                      boxShadow: '4px 4px 0px #1A1A1A',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#252525' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1c1c1c' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#1A1A1A' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1A1A1A' }}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-sans text-[15px] text-[#e5e5e5]">
+                        <span className="font-sans text-[15px] text-[#1A1A1A]">
                           {step.sequenceName}
                         </span>
-                        <span className="font-mono text-[13px] text-[#555]">
+                        <span className="font-mono text-[13px] text-[#737373]">
                           Step {step.stepNumber}
                         </span>
                       </div>
@@ -804,13 +806,13 @@ export default function OverviewPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="font-mono text-[13px]" style={{ color: '#f87171' }}>
+                      <span className="font-mono text-[13px]" style={{ color: '#DC2626' }}>
                         {fmt(step.replyRate)} reply
                       </span>
                       {step.stepType && (
                         <span
                           className="font-mono text-[11px] px-1.5 py-0.5 rounded"
-                          style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+                          style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}
                         >
                           {step.stepType}
                         </span>
@@ -818,12 +820,12 @@ export default function OverviewPage() {
                       {step.stepIntent && (
                         <span
                           className="font-mono text-[11px] px-1.5 py-0.5 rounded"
-                          style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+                          style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}
                         >
                           {step.stepIntent}
                         </span>
                       )}
-                      <span className="font-mono text-[11px] text-[#333] ml-auto">
+                      <span className="font-mono text-[11px] text-[#A3A3A3] ml-auto">
                         View rewrite →
                       </span>
                     </div>
@@ -832,7 +834,7 @@ export default function OverviewPage() {
               })}
             </div>
           ) : (
-            <p className="font-sans text-[15px] text-[#555] mb-6">No flagged steps found.</p>
+            <p className="font-sans text-[15px] text-[#737373] mb-6">No flagged steps found.</p>
           )}
         </>
       )}

@@ -62,9 +62,9 @@ function severityFromConfidence(confidence: number | null): 'high' | 'medium' | 
 }
 
 const severityStyles: Record<string, { bg: string; color: string; border: string }> = {
-  high: { bg: '#1a0505', color: '#f87171', border: '#331010' },
-  medium: { bg: '#1a1200', color: '#fbbf24', border: '#332400' },
-  low: { bg: '#141414', color: '#555', border: '#222' },
+  high: { bg: '#FEE2E2', color: '#DC2626', border: '#DC2626' },
+  medium: { bg: '#FEF3C7', color: '#F59E0B', border: '#F59E0B' },
+  low: { bg: '#F5F5F5', color: '#737373', border: '#D4D4D4' },
 }
 
 function fmt(rate: number | null): string {
@@ -250,7 +250,7 @@ export default function RewriteDrawer() {
       {/* Scrim */}
       <div
         className="fixed inset-0 z-[70] transition-opacity duration-200"
-        style={{ background: 'rgba(0,0,0,0.6)' }}
+        style={{ background: 'rgba(0,0,0,0.3)' }}
         onClick={closeDrawer}
       />
 
@@ -260,8 +260,9 @@ export default function RewriteDrawer() {
         style={{
           width: '440px',
           maxWidth: '100vw',
-          background: '#0a0a0a',
-          borderLeft: '1px solid #1c1c1c',
+          background: '#FFFFFF',
+          borderLeft: '2px solid #1A1A1A',
+          boxShadow: '8px 8px 0px #1A1A1A',
           animation: 'slideInRight 250ms ease-out',
         }}
       >
@@ -269,39 +270,39 @@ export default function RewriteDrawer() {
         <button
           onClick={closeDrawer}
           className="absolute top-4 right-4 z-10 transition-colors duration-150 cursor-pointer"
-          style={{ color: '#333' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#333')}
+          style={{ color: '#A3A3A3' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#525252')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#A3A3A3')}
         >
           <X size={18} />
         </button>
 
         {loading ? (
           <div className="px-6 py-8 space-y-4">
-            <div className="h-6 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-[#1c1c1c] rounded animate-pulse w-1/2" />
-            <div className="h-32 bg-[#1c1c1c] rounded-lg animate-pulse" />
-            <div className="h-32 bg-[#1c1c1c] rounded-lg animate-pulse" />
+            <div className="h-6 bg-[#E5E5E5] rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-[#E5E5E5] rounded animate-pulse w-1/2" />
+            <div className="h-32 bg-[#E5E5E5] rounded-lg animate-pulse" />
+            <div className="h-32 bg-[#E5E5E5] rounded-lg animate-pulse" />
           </div>
         ) : !perf && !rewrite ? (
           <div className="px-6 py-20 text-center">
-            <p className="font-sans text-[17px] text-[#555]">No data found for this step.</p>
+            <p className="font-sans text-[17px] text-[#737373]">No data found for this step.</p>
           </div>
         ) : (
           <div className="px-6 py-6 space-y-6">
             {/* ── Section 1: Header ── */}
             <div style={{ paddingRight: '28px' }}>
-              <div className="font-sans text-[19px] text-[#e5e5e5] font-semibold mb-1">
+              <div className="font-sans text-[19px] text-[#1A1A1A] font-semibold mb-1">
                 {sequenceName}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span className="font-mono text-[15px] text-[#888]">
+                <span className="font-mono text-[15px] text-[#525252]">
                   Step {stepNumber}
                 </span>
                 {stepType && (
                   <span
                     className="font-mono text-[13px] px-2 py-0.5 rounded"
-                    style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+                    style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}
                   >
                     {stepType}
                   </span>
@@ -309,7 +310,7 @@ export default function RewriteDrawer() {
                 {stepIntent && (
                   <span
                     className="font-mono text-[13px] px-2 py-0.5 rounded"
-                    style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+                    style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}
                   >
                     {stepIntent}
                   </span>
@@ -324,37 +325,37 @@ export default function RewriteDrawer() {
               {perf && (
                 <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
                   <div>
-                    <span className="font-mono text-[11px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    <span className="font-mono text-[11px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>
                       Reply Rate
                     </span>
-                    <div className="font-mono text-[17px]" style={{ color: '#f87171' }}>
+                    <div className="font-mono text-[17px]" style={{ color: '#DC2626' }}>
                       {fmt(perf.reply_rate)}
                     </div>
                   </div>
                   <div>
-                    <span className="font-mono text-[11px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    <span className="font-mono text-[11px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>
                       Open Rate
                     </span>
-                    <div className="font-mono text-[17px] text-[#aaa]">{fmt(perf.open_rate)}</div>
+                    <div className="font-mono text-[17px] text-[#525252]">{fmt(perf.open_rate)}</div>
                   </div>
                   <div>
-                    <span className="font-mono text-[11px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>
+                    <span className="font-mono text-[11px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>
                       Sends
                     </span>
-                    <div className="font-mono text-[17px] text-[#aaa]">{perf.send_volume}</div>
+                    <div className="font-mono text-[17px] text-[#525252]">{perf.send_volume}</div>
                   </div>
                 </div>
               )}
             </div>
 
-            <div style={{ height: '1px', background: '#1c1c1c' }} />
+            <div style={{ height: '2px', background: '#E5E5E5' }} />
 
             {hasRewrite ? (
               <>
                 {/* ── Section 2: Failure Mode Diagnosis ── */}
                 <div>
                   <div
-                    className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-3"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Failure Mode Diagnosis
@@ -364,7 +365,7 @@ export default function RewriteDrawer() {
                     <div className="mb-3">
                       <span
                         className="font-mono text-[13px] px-2 py-0.5 rounded"
-                        style={{ background: '#0d1526', color: '#3b82f6', border: '1px solid #1a2d4a' }}
+                        style={{ background: '#DBEAFE', color: '#2563EB', border: '1px solid #2563EB' }}
                       >
                         {rewrite.signal_class.replace(/_/g, ' ')}
                       </span>
@@ -377,64 +378,64 @@ export default function RewriteDrawer() {
                         <div
                           key={i}
                           className="rounded-md p-3"
-                          style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+                          style={{ background: '#F5F5F5', border: '2px solid #1A1A1A' }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                            <span className="font-mono text-[15px] text-[#e5e5e5] font-medium">
+                            <span className="font-mono text-[15px] text-[#1A1A1A] font-medium">
                               {fm.code.toUpperCase()}
                             </span>
-                            <span className="font-sans text-[15px] text-[#aaa]">
+                            <span className="font-sans text-[15px] text-[#525252]">
                               {fmDisplayName(fm.name)}
                             </span>
                             {fm.confidence && (
-                              <span className="font-mono text-[11px] text-[#555]">
+                              <span className="font-mono text-[11px] text-[#737373]">
                                 ({fm.confidence})
                               </span>
                             )}
                           </div>
-                          <p className="font-sans text-[15px] text-[#888] leading-relaxed">
+                          <p className="font-sans text-[15px] text-[#525252] leading-relaxed">
                             {fm.rationale}
                           </p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="font-sans text-[15px] text-[#555]">No failure modes recorded.</p>
+                    <p className="font-sans text-[15px] text-[#737373]">No failure modes recorded.</p>
                   )}
                 </div>
 
-                <div style={{ height: '1px', background: '#1c1c1c' }} />
+                <div style={{ height: '2px', background: '#E5E5E5' }} />
 
                 {/* ── Section 3: Methodology ── */}
                 <div>
                   <div
-                    className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-3"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Methodology
                   </div>
                   {rewrite.methodology_used ? (
                     <>
-                      <div className="font-sans text-[17px] text-[#e5e5e5] font-medium mb-2">
+                      <div className="font-sans text-[17px] text-[#1A1A1A] font-medium mb-2">
                         {methodologyName(rewrite.methodology_used)}
                       </div>
                       {methodologyRationale(rewrite.methodology_used) && (
-                        <p className="font-sans text-[15px] text-[#888] leading-relaxed">
+                        <p className="font-sans text-[15px] text-[#525252] leading-relaxed">
                           {methodologyRationale(rewrite.methodology_used)}
                         </p>
                       )}
                     </>
                   ) : (
-                    <p className="font-sans text-[15px] text-[#555]">No methodology recorded.</p>
+                    <p className="font-sans text-[15px] text-[#737373]">No methodology recorded.</p>
                   )}
                 </div>
 
-                <div style={{ height: '1px', background: '#1c1c1c' }} />
+                <div style={{ height: '2px', background: '#E5E5E5' }} />
 
                 {/* ── Section 4: Diff View ── */}
                 <div>
                   <div
-                    className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-3"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Copy Comparison
@@ -444,7 +445,7 @@ export default function RewriteDrawer() {
                   {(rewrite.step_copy_snapshot?.subject || rewrite.suggested_subject) && (
                     <div className="mb-4">
                       <div
-                        className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                        className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-2"
                         style={{ letterSpacing: '0.08em' }}
                       >
                         Subject Line
@@ -454,20 +455,20 @@ export default function RewriteDrawer() {
                         <div
                           className="rounded-md p-3"
                           style={{
-                            background: '#0a0a0a',
-                            borderLeft: '3px solid #f87171',
-                            border: '1px solid #1a1a1a',
-                            borderLeftColor: '#f87171',
+                            background: '#FEE2E2',
+                            borderLeft: '3px solid #DC2626',
+                            border: '1px solid #E5E5E5',
+                            borderLeftColor: '#DC2626',
                             borderLeftWidth: '3px',
                           }}
                         >
                           <span
-                            className="font-mono text-[9px] uppercase text-[#444] block mb-1"
+                            className="font-mono text-[9px] uppercase text-[#737373] block mb-1"
                             style={{ letterSpacing: '0.08em' }}
                           >
                             Original
                           </span>
-                          <span className="font-sans text-[15px] text-[#888]">
+                          <span className="font-sans text-[15px] text-[#525252]">
                             {rewrite.step_copy_snapshot?.subject ?? '—'}
                           </span>
                         </div>
@@ -475,20 +476,20 @@ export default function RewriteDrawer() {
                         <div
                           className="rounded-md p-3"
                           style={{
-                            background: '#03100a',
-                            borderLeft: '3px solid #22c55e',
-                            border: '1px solid #0d3020',
-                            borderLeftColor: '#22c55e',
+                            background: '#DCFCE7',
+                            borderLeft: '3px solid #16A34A',
+                            border: '1px solid #E5E5E5',
+                            borderLeftColor: '#16A34A',
                             borderLeftWidth: '3px',
                           }}
                         >
                           <span
-                            className="font-mono text-[9px] uppercase text-[#444] block mb-1"
+                            className="font-mono text-[9px] uppercase text-[#737373] block mb-1"
                             style={{ letterSpacing: '0.08em' }}
                           >
                             Rewrite
                           </span>
-                          <span className="font-sans text-[15px] text-[#aaa]">
+                          <span className="font-sans text-[15px] text-[#525252]">
                             {rewrite.suggested_subject ?? '—'}
                           </span>
                         </div>
@@ -499,7 +500,7 @@ export default function RewriteDrawer() {
                   {/* Body */}
                   <div>
                     <div
-                      className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                      className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-2"
                       style={{ letterSpacing: '0.08em' }}
                     >
                       Body
@@ -509,22 +510,22 @@ export default function RewriteDrawer() {
                       <div
                         className="rounded-md p-3"
                         style={{
-                          background: '#0a0a0a',
-                          borderLeft: '3px solid #f87171',
-                          border: '1px solid #1a1a1a',
-                          borderLeftColor: '#f87171',
+                          background: '#FEE2E2',
+                          borderLeft: '3px solid #DC2626',
+                          border: '1px solid #E5E5E5',
+                          borderLeftColor: '#DC2626',
                           borderLeftWidth: '3px',
                           maxHeight: '200px',
                           overflowY: 'auto',
                         }}
                       >
                         <span
-                          className="font-mono text-[9px] uppercase text-[#444] block mb-1"
+                          className="font-mono text-[9px] uppercase text-[#737373] block mb-1"
                           style={{ letterSpacing: '0.08em' }}
                         >
                           Original
                         </span>
-                        <p className="font-sans text-[15px] text-[#888] whitespace-pre-wrap leading-relaxed">
+                        <p className="font-sans text-[15px] text-[#525252] whitespace-pre-wrap leading-relaxed">
                           {rewrite.step_copy_snapshot?.body ?? '—'}
                         </p>
                       </div>
@@ -532,22 +533,22 @@ export default function RewriteDrawer() {
                       <div
                         className="rounded-md p-3"
                         style={{
-                          background: '#03100a',
-                          borderLeft: '3px solid #22c55e',
-                          border: '1px solid #0d3020',
-                          borderLeftColor: '#22c55e',
+                          background: '#DCFCE7',
+                          borderLeft: '3px solid #16A34A',
+                          border: '1px solid #E5E5E5',
+                          borderLeftColor: '#16A34A',
                           borderLeftWidth: '3px',
                           maxHeight: '200px',
                           overflowY: 'auto',
                         }}
                       >
                         <span
-                          className="font-mono text-[9px] uppercase text-[#444] block mb-1"
+                          className="font-mono text-[9px] uppercase text-[#737373] block mb-1"
                           style={{ letterSpacing: '0.08em' }}
                         >
                           Rewrite
                         </span>
-                        <p className="font-sans text-[15px] text-[#aaa] whitespace-pre-wrap leading-relaxed">
+                        <p className="font-sans text-[15px] text-[#525252] whitespace-pre-wrap leading-relaxed">
                           {rewrite.suggested_body ?? '—'}
                         </p>
                       </div>
@@ -555,13 +556,13 @@ export default function RewriteDrawer() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#1c1c1c' }} />
+                <div style={{ height: '2px', background: '#E5E5E5' }} />
 
                 {/* ── Section 5: Talking Points ── */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span
-                      className="font-mono text-[11px] uppercase text-[#333]"
+                      className="font-mono text-[11px] uppercase text-[#A3A3A3]"
                       style={{ letterSpacing: '0.08em' }}
                     >
                       Coaching Talking Points
@@ -570,12 +571,12 @@ export default function RewriteDrawer() {
                       onClick={handleCopy}
                       className="flex items-center gap-1.5 font-mono text-[13px] transition-colors duration-150 cursor-pointer rounded px-2 py-1"
                       style={{
-                        color: copied ? '#22c55e' : '#555',
-                        background: copied ? '#052010' : 'transparent',
-                        border: copied ? '1px solid #0d3d1c' : '1px solid transparent',
+                        color: copied ? '#16A34A' : '#525252',
+                        background: copied ? '#DCFCE7' : 'transparent',
+                        border: copied ? '1px solid #16A34A' : '1px solid transparent',
                       }}
-                      onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#888' }}
-                      onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = '#555' }}
+                      onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#1A1A1A' }}
+                      onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = '#525252' }}
                     >
                       {copied ? <Check size={12} /> : <Copy size={12} />}
                       {copied ? 'Copied!' : 'Copy'}
@@ -583,20 +584,20 @@ export default function RewriteDrawer() {
                   </div>
                   <div
                     className="rounded-md p-4"
-                    style={{ background: '#0f0f0f', border: '1px solid #1c1c1c' }}
+                    style={{ background: '#F5F5F5', border: '2px solid #D4D4D4' }}
                   >
-                    <p className="font-sans text-[15px] text-[#aaa] leading-relaxed">
+                    <p className="font-sans text-[15px] text-[#525252] leading-relaxed">
                       {talkingPoints}
                     </p>
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#1c1c1c' }} />
+                <div style={{ height: '2px', background: '#E5E5E5' }} />
 
                 {/* ── Section 6: Regenerate ── */}
                 <div className="space-y-2">
                   {generateError && (
-                    <p className="font-sans text-[13px] text-[#f87171] text-right">
+                    <p className="font-sans text-[13px] text-[#DC2626] text-right">
                       {generateError}
                     </p>
                   )}
@@ -606,9 +607,10 @@ export default function RewriteDrawer() {
                       disabled={generating}
                       className="flex items-center gap-2 font-mono text-[13px] rounded-md px-4 py-2 transition-colors duration-150"
                       style={{
-                        background: generating ? '#0a0f1a' : '#0f1729',
-                        border: '1px solid #1e3a5f',
-                        color: generating ? '#2563aa' : '#3b82f6',
+                        background: generating ? '#F5F5F5' : '#DBEAFE',
+                        border: '2px solid #2563EB',
+                        color: generating ? '#A3A3A3' : '#2563EB',
+                        boxShadow: generating ? 'none' : '4px 4px 0px #2563EB',
                         cursor: generating ? 'not-allowed' : 'pointer',
                         opacity: generating ? 0.6 : 1,
                       }}
@@ -622,12 +624,12 @@ export default function RewriteDrawer() {
             ) : (
               /* ── Empty state: no rewrite data ── */
               <div className="flex flex-col items-center gap-4 py-12">
-                <Sparkles size={24} style={{ color: '#333' }} />
-                <p className="font-sans text-[17px] text-[#555] text-center">
+                <Sparkles size={24} style={{ color: '#A3A3A3' }} />
+                <p className="font-sans text-[17px] text-[#737373] text-center">
                   No rewrite suggestion exists for this step yet.
                 </p>
                 {generateError && (
-                  <p className="font-sans text-[13px] text-[#f87171] text-center">
+                  <p className="font-sans text-[13px] text-[#DC2626] text-center">
                     {generateError}
                   </p>
                 )}
@@ -636,9 +638,10 @@ export default function RewriteDrawer() {
                   disabled={generating}
                   className="flex items-center gap-2 font-mono text-[13px] rounded-md px-4 py-2 transition-colors duration-150"
                   style={{
-                    background: generating ? '#0a0f1a' : '#0f1729',
-                    border: '1px solid #1e3a5f',
-                    color: generating ? '#2563aa' : '#3b82f6',
+                    background: generating ? '#F5F5F5' : '#DBEAFE',
+                    border: '2px solid #2563EB',
+                    color: generating ? '#A3A3A3' : '#2563EB',
+                    boxShadow: generating ? 'none' : '4px 4px 0px #2563EB',
                     cursor: generating ? 'not-allowed' : 'pointer',
                     opacity: generating ? 0.6 : 1,
                   }}

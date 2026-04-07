@@ -1,35 +1,78 @@
-/* Fira Code + Fira Sans — per design-system/beacon-loop/MASTER.md */
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+/* Satoshi — self-hosted from Fontshare */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: 'Fira Sans', sans-serif;
-  --font-mono: 'Fira Code', monospace;
+  --font-sans: 'Satoshi', sans-serif;
+  --font-heading: var(--font-heading), 'Space Grotesk', sans-serif;
+  --font-mono: var(--font-mono), 'JetBrains Mono', monospace;
 }
 
 :root {
-  /* Color tokens — design-system/beacon-loop/MASTER.md */
-  --color-primary: #1E40AF;
-  --color-secondary: #3B82F6;
-  --color-cta: #F59E0B;
-  --color-background: #F8FAFC;
-  --color-text: #1E3A8A;
+  /* Background & Surfaces */
+  --bg-base: #FAFAFA;
+  --bg-surface: #FFFFFF;
+  --bg-muted: #F5F5F5;
 
-  /* Spacing tokens */
+  /* Text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #525252;
+  --text-muted: #737373;
+  --text-disabled: #A3A3A3;
+
+  /* Borders */
+  --border-primary: #1A1A1A;
+  --border-subtle: #D4D4D4;
+  --border-divider: #E5E5E5;
+
+  /* Accents */
+  --accent-primary: #2563EB;
+  --accent-success: #16A34A;
+  --accent-warning: #F59E0B;
+  --accent-danger: #DC2626;
+  --accent-info: #7C3AED;
+
+  /* Accent tints (pill backgrounds) */
+  --tint-primary: #DBEAFE;
+  --tint-success: #DCFCE7;
+  --tint-warning: #FEF3C7;
+  --tint-danger: #FEE2E2;
+  --tint-info: #EDE9FE;
+
+  /* Shadows — hard offset, no blur */
+  --shadow-sm: 2px 2px 0px #1A1A1A;
+  --shadow-md: 4px 4px 0px #1A1A1A;
+  --shadow-lg: 6px 6px 0px #1A1A1A;
+  --shadow-xl: 8px 8px 0px #1A1A1A;
+
+  /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
-  --space-3xl: 64px;
-
-  /* Shadow tokens */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
 }
 
 html {
@@ -37,51 +80,40 @@ html {
 }
 
 body {
-  background-color: #0a0a0a;
-  color: #f1f5f9;
-  font-family: 'Fira Sans', sans-serif;
-  font-size: 17px;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Satoshi', sans-serif;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(circle, #222 1px, transparent 1px);
-  background-size: 22px 22px;
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: -1;
-}
+/* NO dot-grid background — removed */
 
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-muted);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #222;
-  border-radius: 2px;
+  background: var(--border-subtle);
+  border-radius: 3px;
 }
 
-/* Rewrite drawer slide-in animation */
+/* Rewrite drawer slide-in */
 @keyframes slideInRight {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
 }
 
-/* Ask Beacon streaming cursor blink */
+/* Ask Beacon cursor blink */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
 
-/* Ask Beacon modal slide-up */
+/* Modal slide-up */
 @keyframes modalSlideUp {
   from { opacity: 0; transform: translateY(24px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0) scale(1); }

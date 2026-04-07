@@ -25,12 +25,13 @@ function NavItem({ href, label, icon, active }: NavItemProps) {
       href={href}
       className="flex items-center gap-2 rounded px-2 py-1.5 text-[16px] font-mono no-underline transition-colors duration-150"
       style={{
-        border: active ? '1px solid #252525' : '1px solid transparent',
-        background: active ? '#161616' : 'transparent',
-        color: active ? '#e5e5e5' : '#555',
+        border: active ? '2px solid #1A1A1A' : '2px solid transparent',
+        background: active ? '#1A1A1A' : 'transparent',
+        color: active ? '#FFFFFF' : '#737373',
+        boxShadow: active ? '2px 2px 0px #1A1A1A' : 'none',
       }}
     >
-      <span className="flex items-center shrink-0" style={{ color: active ? '#3b82f6' : '#444' }}>
+      <span className="flex items-center shrink-0" style={{ color: active ? '#FFFFFF' : '#A3A3A3' }}>
         {icon}
       </span>
       <span>{label}</span>
@@ -56,7 +57,7 @@ function SectionHeader({ label, expanded, onToggle, disabled, badge }: SectionHe
       style={{
         background: 'transparent',
         border: 'none',
-        color: disabled ? '#333' : '#666',
+        color: disabled ? '#A3A3A3' : '#737373',
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled ? 0.5 : 1,
       }}
@@ -67,9 +68,9 @@ function SectionHeader({ label, expanded, onToggle, disabled, badge }: SectionHe
         <span
           className="ml-auto text-[9px] font-sans rounded px-1.5 py-0.5"
           style={{
-            background: '#1a1a1a',
-            color: '#444',
-            border: '1px solid #252525',
+            background: '#F5F5F5',
+            color: '#A3A3A3',
+            border: '2px solid #D4D4D4',
           }}
         >
           {badge}
@@ -90,17 +91,17 @@ export default function Nav() {
       style={{
         width: '200px',
         height: '100vh',
-        background: '#0a0a0a',
-        borderRight: '1px solid #1c1c1c',
+        background: '#FFFFFF',
+        borderRight: '2px solid #1A1A1A',
       }}
     >
       {/* BEACON wordmark */}
-      <div className="px-4 pt-5 pb-3" style={{ borderBottom: '1px solid #1c1c1c' }}>
+      <div className="px-4 pt-5 pb-3" style={{ borderBottom: '2px solid #1A1A1A' }}>
         <span
           className="font-mono text-[18px] font-semibold tracking-wide"
-          style={{ color: '#e5e5e5' }}
+          style={{ color: '#1A1A1A' }}
         >
-          beacon<span style={{ color: '#3b82f6' }}>.</span>
+          beacon<span style={{ color: '#2563EB' }}>.</span>
         </span>
       </div>
 
@@ -164,7 +165,7 @@ export default function Nav() {
       </div>
 
       {/* Footer */}
-      <div className="mt-auto" style={{ borderTop: '1px solid #1c1c1c' }}>
+      <div className="mt-auto" style={{ borderTop: '2px solid #1A1A1A' }}>
         {/* Role selector */}
         <div className="px-3 pt-3 pb-2">
           <select
@@ -172,18 +173,18 @@ export default function Nav() {
             onChange={(e) => setRole(e.target.value as Role)}
             className="w-full font-mono text-[13px] rounded cursor-pointer outline-none"
             style={{
-              color: '#888',
-              background: '#0f0f0f',
-              border: '1px solid #1c1c1c',
+              color: '#525252',
+              background: '#FFFFFF',
+              border: '2px solid #1A1A1A',
               padding: '4px 28px 4px 8px',
               appearance: 'none',
               WebkitAppearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'right 8px center',
             }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = '#333' }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = '#1c1c1c' }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = '#2563EB' }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = '#1A1A1A' }}
           >
             {roleOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -197,9 +198,9 @@ export default function Nav() {
         <div className="flex items-center gap-1.5 px-4 pb-3">
           <span
             className="shrink-0 rounded-full"
-            style={{ width: '6px', height: '6px', background: '#22c55e' }}
+            style={{ width: '6px', height: '6px', background: '#16A34A' }}
           />
-          <span className="font-mono text-[12px]" style={{ color: '#333' }}>
+          <span className="font-mono text-[12px]" style={{ color: '#A3A3A3' }}>
             pipeline live
           </span>
         </div>

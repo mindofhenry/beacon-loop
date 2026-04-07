@@ -70,10 +70,10 @@ export default function RewriteModal({
 
   const confidenceColor =
     rewrite?.confidence === 'high'
-      ? { bg: '#052010', color: '#4ade80', border: '#0d3d1c' }
+      ? { bg: '#DCFCE7', color: '#16A34A', border: '#16A34A' }
       : rewrite?.confidence === 'medium'
-        ? { bg: '#1a1200', color: '#fbbf24', border: '#332400' }
-        : { bg: '#1a0505', color: '#f87171', border: '#331010' }
+        ? { bg: '#FEF3C7', color: '#F59E0B', border: '#F59E0B' }
+        : { bg: '#FEE2E2', color: '#DC2626', border: '#DC2626' }
 
   return (
     <div
@@ -81,16 +81,17 @@ export default function RewriteModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.75)' }} />
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.3)' }} />
 
       {/* Modal */}
       <div
         className="relative z-10 w-[90%] max-h-[85vh] overflow-y-auto p-8"
         style={{
-          background: '#0d0d0d',
-          border: '1px solid #252525',
+          background: '#FFFFFF',
+          border: '2px solid #1A1A1A',
           borderRadius: '10px',
           maxWidth: '900px',
+          boxShadow: '8px 8px 0px #1A1A1A',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -98,9 +99,9 @@ export default function RewriteModal({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 transition-colors duration-150 cursor-pointer"
-          style={{ color: '#333' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#333')}
+          style={{ color: '#A3A3A3' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#525252')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#A3A3A3')}
         >
           <X size={18} />
         </button>
@@ -108,37 +109,37 @@ export default function RewriteModal({
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-sans text-[17px] text-[#aaa]">
+            <span className="font-sans text-[17px] text-[#525252]">
               {sequenceName} — Step {stepNumber}
             </span>
             <span
               className="font-mono text-[13px] rounded px-2 py-0.5"
               style={{
-                background: '#1a0505',
-                color: '#f87171',
-                border: '1px solid #331010',
+                background: '#FEE2E2',
+                color: '#DC2626',
+                border: '1px solid #DC2626',
               }}
             >
               {(healthScore * 100).toFixed(0)}
             </span>
           </div>
-          <span className="font-mono text-[13px] text-[#333]">
+          <span className="font-mono text-[13px] text-[#A3A3A3]">
             {stepType}
           </span>
         </div>
 
         {loading ? (
           <div className="space-y-4 py-4">
-            <div className="h-4 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
+            <div className="h-4 bg-[#E5E5E5] rounded animate-pulse w-3/4" />
             <div className="grid grid-cols-2 gap-6">
-              <div className="h-48 bg-[#1c1c1c] rounded-lg animate-pulse" />
-              <div className="h-48 bg-[#1c1c1c] rounded-lg animate-pulse" />
+              <div className="h-48 bg-[#E5E5E5] rounded-lg animate-pulse" />
+              <div className="h-48 bg-[#E5E5E5] rounded-lg animate-pulse" />
             </div>
-            <div className="h-16 bg-[#1c1c1c] rounded-lg animate-pulse" />
+            <div className="h-16 bg-[#E5E5E5] rounded-lg animate-pulse" />
           </div>
         ) : !rewrite ? (
           <div className="flex flex-col items-center gap-4 py-12">
-            <p className="font-mono text-[13px] text-[#333]">
+            <p className="font-mono text-[13px] text-[#A3A3A3]">
               no rewrite suggestion exists for this step yet.
             </p>
             <button
@@ -146,9 +147,10 @@ export default function RewriteModal({
               disabled={generating}
               className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 font-mono text-[13px] rounded-md px-4 py-1.5"
               style={{
-                background: '#0f1729',
-                border: '1px solid #1e3a5f',
-                color: '#3b82f6',
+                background: '#DBEAFE',
+                border: '2px solid #2563EB',
+                color: '#2563EB',
+                boxShadow: '4px 4px 0px #2563EB',
               }}
             >
               {generating ? (
@@ -166,14 +168,14 @@ export default function RewriteModal({
               {/* Current */}
               <div>
                 <p
-                  className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                  className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-3"
                   style={{ letterSpacing: '0.08em' }}
                 >
                   Current
                 </p>
                 <div className="mb-3">
                   <p
-                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-1.5"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Subject
@@ -181,9 +183,9 @@ export default function RewriteModal({
                   <div
                     className="font-sans text-[15px] italic rounded-md p-3"
                     style={{
-                      background: '#0a0a0a',
-                      border: '1px solid #1a1a1a',
-                      color: '#888',
+                      background: '#FEE2E2',
+                      border: '1px solid #E5E5E5',
+                      color: '#525252',
                       minHeight: '40px',
                     }}
                   >
@@ -192,7 +194,7 @@ export default function RewriteModal({
                 </div>
                 <div>
                   <p
-                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-1.5"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Body
@@ -200,9 +202,9 @@ export default function RewriteModal({
                   <div
                     className="font-sans text-[15px] italic rounded-md p-3 whitespace-pre-wrap overflow-y-auto"
                     style={{
-                      background: '#0a0a0a',
-                      border: '1px solid #1a1a1a',
-                      color: '#888',
+                      background: '#FEE2E2',
+                      border: '1px solid #E5E5E5',
+                      color: '#525252',
                       minHeight: '120px',
                       maxHeight: '250px',
                     }}
@@ -215,14 +217,14 @@ export default function RewriteModal({
               {/* Suggested */}
               <div>
                 <p
-                  className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                  className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-3"
                   style={{ letterSpacing: '0.08em' }}
                 >
                   Suggested
                 </p>
                 <div className="mb-3">
                   <p
-                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-1.5"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Subject
@@ -230,9 +232,9 @@ export default function RewriteModal({
                   <div
                     className="font-sans text-[15px] rounded-md p-3"
                     style={{
-                      background: '#03100a',
-                      border: '1px solid #0d3020',
-                      color: '#aaa',
+                      background: '#DCFCE7',
+                      border: '2px solid #16A34A',
+                      color: '#525252',
                       minHeight: '40px',
                     }}
                   >
@@ -241,7 +243,7 @@ export default function RewriteModal({
                 </div>
                 <div>
                   <p
-                    className="font-mono text-[11px] uppercase text-[#333] mb-1.5"
+                    className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-1.5"
                     style={{ letterSpacing: '0.08em' }}
                   >
                     Body
@@ -249,9 +251,9 @@ export default function RewriteModal({
                   <div
                     className="font-sans text-[15px] rounded-md p-3 whitespace-pre-wrap overflow-y-auto"
                     style={{
-                      background: '#03100a',
-                      border: '1px solid #0d3020',
-                      color: '#aaa',
+                      background: '#DCFCE7',
+                      border: '2px solid #16A34A',
+                      color: '#525252',
                       minHeight: '120px',
                       maxHeight: '250px',
                     }}
@@ -279,12 +281,12 @@ export default function RewriteModal({
             {/* Diagnosis */}
             <div className="mb-4">
               <p
-                className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-2"
                 style={{ letterSpacing: '0.08em' }}
               >
                 Diagnosis
               </p>
-              <p className="font-sans text-[17px] text-[#aaa] leading-relaxed">
+              <p className="font-sans text-[17px] text-[#525252] leading-relaxed">
                 {rewrite.diagnosis}
               </p>
             </div>
@@ -294,17 +296,17 @@ export default function RewriteModal({
               <div
                 className="mb-6 p-4 rounded-md"
                 style={{
-                  background: '#0f0f0f',
-                  border: '1px solid #1c1c1c',
+                  background: '#F5F5F5',
+                  border: '2px solid #D4D4D4',
                 }}
               >
                 <p
-                  className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                  className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-2"
                   style={{ letterSpacing: '0.08em' }}
                 >
                   Why This Works
                 </p>
-                <p className="font-sans text-[17px] text-[#888] leading-relaxed">
+                <p className="font-sans text-[17px] text-[#525252] leading-relaxed">
                   {rewrite.explanation}
                 </p>
               </div>
@@ -317,9 +319,10 @@ export default function RewriteModal({
                 disabled={generating}
                 className="flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 font-mono text-[13px] rounded-md px-4 py-1.5"
                 style={{
-                  background: '#0f1729',
-                  border: '1px solid #1e3a5f',
-                  color: '#3b82f6',
+                  background: '#DBEAFE',
+                  border: '2px solid #2563EB',
+                  color: '#2563EB',
+                  boxShadow: '4px 4px 0px #2563EB',
                 }}
               >
                 {generating ? (

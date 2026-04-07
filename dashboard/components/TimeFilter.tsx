@@ -21,15 +21,15 @@ export default function TimeFilter({ value, onChange }: Props) {
             className="font-mono text-[13px] rounded cursor-pointer transition-colors duration-150"
             style={{
               padding: '4px 10px',
-              border: active ? '1px solid #252525' : '1px solid transparent',
-              background: active ? '#161616' : 'transparent',
-              color: active ? '#e5e5e5' : '#444',
+              border: active ? '2px solid #1A1A1A' : '2px solid #D4D4D4',
+              background: active ? '#1A1A1A' : '#FFFFFF',
+              color: active ? '#FFFFFF' : '#525252',
             }}
             onMouseEnter={(e) => {
-              if (!active) e.currentTarget.style.color = '#888'
+              if (!active) e.currentTarget.style.color = '#1A1A1A'
             }}
             onMouseLeave={(e) => {
-              if (!active) e.currentTarget.style.color = '#444'
+              if (!active) e.currentTarget.style.color = '#525252'
             }}
           >
             {opt}
