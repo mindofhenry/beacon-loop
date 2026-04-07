@@ -55,9 +55,9 @@ function fmt(rate: number | null): string {
 }
 
 function healthColor(score: number): string {
-  if (score >= 70) return '#22c55e'
+  if (score >= 70) return '#16A34A'
   if (score >= 40) return '#f59e0b'
-  return '#f87171'
+  return '#DC2626'
 }
 
 function aggregate(rows: StepPerfRow[], repsMap: Map<number, string>): SequenceRow[] {
@@ -138,8 +138,8 @@ function SourceBadge({ source }: { source: 'Outreach' | 'Salesloft' }) {
       className="font-mono text-[10px] px-2 py-0.5 rounded"
       style={
         isOR
-          ? { background: '#0d1526', color: '#3b82f6', border: '1px solid #1a2d4a' }
-          : { background: '#141414', color: '#555', border: '1px solid #222' }
+          ? { background: '#DBEAFE', color: '#2563EB', border: '1px solid #2563EB' }
+          : { background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }
       }
     >
       {isOR ? 'OR' : 'SL'}
@@ -155,7 +155,7 @@ function HealthBar({ score }: { score: number }) {
         style={{
           width: '72px',
           height: '4px',
-          background: '#1c1c1c',
+          background: '#E5E5E5',
           borderRadius: '2px',
           overflow: 'hidden',
         }}
@@ -179,9 +179,9 @@ function HealthBar({ score }: { score: number }) {
 
 type SortIconProps = { col: SortKey; sortKey: SortKey; sortDir: SortDir }
 function SortIcon({ col, sortKey, sortDir }: SortIconProps) {
-  if (col !== sortKey) return <ChevronsUpDown size={10} style={{ color: '#333', flexShrink: 0 }} />
-  if (sortDir === 'asc') return <ChevronUp size={10} style={{ color: '#888', flexShrink: 0 }} />
-  return <ChevronDown size={10} style={{ color: '#888', flexShrink: 0 }} />
+  if (col !== sortKey) return <ChevronsUpDown size={10} style={{ color: '#A3A3A3', flexShrink: 0 }} />
+  if (sortDir === 'asc') return <ChevronUp size={10} style={{ color: '#525252', flexShrink: 0 }} />
+  return <ChevronDown size={10} style={{ color: '#525252', flexShrink: 0 }} />
 }
 
 type ThProps = {
@@ -203,7 +203,7 @@ function Th({ label, col, align = 'left', sortKey, sortDir, onSort }: ThProps) {
         className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''}`}
       >
         <span
-          className="font-mono text-[9px] uppercase text-[#333]"
+          className="font-mono text-[9px] uppercase text-[#A3A3A3]"
           style={{ letterSpacing: '0.08em' }}
         >
           {label}
@@ -237,9 +237,9 @@ function FilterBar({
 }: FilterBarProps) {
   const selectStyle = {
     fontSize: '13px',
-    color: '#aaa',
-    background: '#111',
-    border: '1px solid #1c1c1c',
+    color: '#525252',
+    background: '#FFFFFF',
+    border: '2px solid #1A1A1A',
     borderRadius: '4px',
     padding: '4px 8px',
     cursor: 'pointer',
@@ -257,9 +257,9 @@ function FilterBar({
   function toggleStyle(active: boolean) {
     return {
       ...toggleBase,
-      border: active ? '1px solid #252525' : '1px solid transparent',
-      background: active ? '#161616' : 'transparent',
-      color: active ? '#e5e5e5' : '#444',
+      border: active ? '2px solid #1A1A1A' : '2px solid #D4D4D4',
+      background: active ? '#1A1A1A' : '#FFFFFF',
+      color: active ? '#FFFFFF' : '#525252',
     }
   }
 
@@ -281,7 +281,7 @@ function FilterBar({
       {/* Rep filter */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span
-          className="font-mono text-[9px] uppercase text-[#333]"
+          className="font-mono text-[9px] uppercase text-[#A3A3A3]"
           style={{ letterSpacing: '0.08em' }}
         >
           Rep
@@ -301,12 +301,12 @@ function FilterBar({
         </select>
       </div>
 
-      <div style={{ width: '1px', height: '16px', background: '#1c1c1c' }} />
+      <div style={{ width: '1px', height: '16px', background: '#E5E5E5' }} />
 
       {/* Source toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         <span
-          className="font-mono text-[9px] uppercase text-[#333]"
+          className="font-mono text-[9px] uppercase text-[#A3A3A3]"
           style={{ letterSpacing: '0.08em', marginRight: '4px' }}
         >
           Source
@@ -318,12 +318,12 @@ function FilterBar({
         ))}
       </div>
 
-      <div style={{ width: '1px', height: '16px', background: '#1c1c1c' }} />
+      <div style={{ width: '1px', height: '16px', background: '#E5E5E5' }} />
 
       {/* Health toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         <span
-          className="font-mono text-[9px] uppercase text-[#333]"
+          className="font-mono text-[9px] uppercase text-[#A3A3A3]"
           style={{ letterSpacing: '0.08em', marginRight: '4px' }}
         >
           Health
@@ -436,7 +436,8 @@ export default function SequencesPage() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <h1
-        className="font-sans text-[24px] font-semibold text-[#e5e5e5] mb-6"
+        className="font-sans text-[24px] font-semibold text-[#1A1A1A] mb-6"
+        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
       >
         Sequences
       </h1>
@@ -462,22 +463,22 @@ export default function SequencesPage() {
       {loading && (
         <div className="space-y-2">
           {['w-full', 'w-11/12', 'w-full', 'w-10/12', 'w-full'].map((w, i) => (
-            <div key={i} className={`h-10 bg-[#1c1c1c] rounded animate-pulse ${w}`} />
+            <div key={i} className={`h-10 bg-[#E5E5E5] rounded animate-pulse ${w}`} />
           ))}
         </div>
       )}
 
       {!loading && !error && sorted.length === 0 && (
-        <p className="font-sans text-sm text-[#555] py-8 text-center">
+        <p className="font-sans text-sm text-[#737373] py-8 text-center">
           No sequences match the current filters.
         </p>
       )}
 
       {!loading && !error && sorted.length > 0 && (
-        <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
+        <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-[#0a0a0a] border-b border-[#1c1c1c] sticky top-0">
+              <tr className="bg-[#F5F5F5] border-b-2 border-[#1A1A1A] sticky top-0">
                 <Th
                   label="Sequence"
                   col="sequence_name"
@@ -546,12 +547,12 @@ export default function SequencesPage() {
                 <tr
                   key={seq.sequence_id}
                   onClick={() => router.push(`/sequences/${seq.sequence_id}`)}
-                  className="border-b border-b-[#1a1a1a] cursor-pointer transition-colors duration-150 hover:bg-[#0f0f0f]"
+                  className="border-b border-b-[#E5E5E5] cursor-pointer transition-colors duration-150 hover:bg-[#F5F5F5]"
                 >
                   <td className="px-4 py-3.5">
-                    <div className="font-sans text-sm text-[#aaa]">{seq.sequence_name}</div>
+                    <div className="font-sans text-sm text-[#525252]">{seq.sequence_name}</div>
                     <div
-                      className="font-mono text-[10px] text-[#333] mt-0.5"
+                      className="font-mono text-[10px] text-[#A3A3A3] mt-0.5"
                       style={{ letterSpacing: '0.04em' }}
                     >
                       {seq.sequence_id}
@@ -561,26 +562,26 @@ export default function SequencesPage() {
                     <SourceBadge source={seq.source} />
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className="font-sans text-xs text-[#555]">{seq.rep_name}</span>
+                    <span className="font-sans text-xs text-[#737373]">{seq.rep_name}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{seq.step_count}</span>
+                    <span className="font-mono text-sm text-[#525252]">{seq.step_count}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
                     <span
                       className="font-mono text-sm"
-                      style={{ color: seq.flagged_count > 0 ? '#f87171' : '#555' }}
+                      style={{ color: seq.flagged_count > 0 ? '#DC2626' : '#737373' }}
                     >
                       {seq.flagged_count}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">
+                    <span className="font-mono text-sm text-[#525252]">
                       {fmt(seq.avg_reply_rate)}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{fmt(seq.avg_open_rate)}</span>
+                    <span className="font-mono text-sm text-[#525252]">{fmt(seq.avg_open_rate)}</span>
                   </td>
                   <td className="px-4 py-3.5">
                     <HealthBar score={seq.health} />

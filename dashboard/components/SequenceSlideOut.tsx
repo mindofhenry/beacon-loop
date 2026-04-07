@@ -53,9 +53,9 @@ type Props = {
 }
 
 const tierPill: Record<'green' | 'yellow' | 'red', { bg: string; color: string; border: string }> = {
-  green:  { bg: '#052010', color: '#4ade80', border: '#0d3d1c' },
-  yellow: { bg: '#1a1200', color: '#fbbf24', border: '#332400' },
-  red:    { bg: '#1a0505', color: '#f87171', border: '#331010' },
+  green:  { bg: '#DCFCE7', color: '#16A34A', border: '#16A34A' },
+  yellow: { bg: '#FEF3C7', color: '#F59E0B', border: '#F59E0B' },
+  red:    { bg: '#FEE2E2', color: '#DC2626', border: '#DC2626' },
 }
 
 function StepIcon({ type }: { type: string }) {
@@ -125,24 +125,24 @@ export default function SequenceSlideOut({
       {/* Slide-out panel */}
       <div
         className="fixed top-0 right-0 z-50 h-full w-full md:w-[50vw] overflow-y-auto transform transition-transform duration-200 ease-out translate-x-0"
-        style={{ background: '#0a0a0a', borderLeft: '1px solid #1c1c1c' }}
+        style={{ background: '#FFFFFF', borderLeft: '2px solid #1A1A1A' }}
       >
         {/* Header */}
         <div
           className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
-          style={{ background: '#0a0a0a', borderBottom: '1px solid #1c1c1c' }}
+          style={{ background: '#FFFFFF', borderBottom: '2px solid #1A1A1A' }}
         >
           <div className="flex items-center gap-3">
-            <span className="font-sans text-[17px] text-[#aaa]" style={{ letterSpacing: '0.04em' }}>
+            <span className="font-sans text-[17px] text-[#525252]" style={{ letterSpacing: '0.04em' }}>
               {detail?.sequence_name ?? sequenceId}
             </span>
             {detail?.source && (
               <span
                 className="font-mono text-[11px] rounded px-1.5 py-0.5"
                 style={{
-                  background: '#141414',
-                  color: '#555',
-                  border: '1px solid #222',
+                  background: '#F5F5F5',
+                  color: '#737373',
+                  border: '1px solid #D4D4D4',
                 }}
               >
                 {detail.source}
@@ -162,9 +162,9 @@ export default function SequenceSlideOut({
           <button
             onClick={onClose}
             className="transition-colors duration-150 cursor-pointer"
-            style={{ color: '#333' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#333')}
+            style={{ color: '#A3A3A3' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#525252')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#A3A3A3')}
           >
             <X size={18} />
           </button>
@@ -175,13 +175,13 @@ export default function SequenceSlideOut({
           <div
             className="rounded-md p-4"
             style={{
-              background: '#0f0f0f',
-              border: '1px solid #1c1c1c',
+              background: '#F5F5F5',
+              border: '2px solid #D4D4D4',
             }}
           >
             <div className="flex items-center justify-between mb-3">
               <span
-                className="font-mono text-[11px] uppercase text-[#333]"
+                className="font-mono text-[11px] uppercase text-[#A3A3A3]"
                 style={{ letterSpacing: '0.08em' }}
               >
                 Sequence Intelligence
@@ -190,9 +190,9 @@ export default function SequenceSlideOut({
                 onClick={() => fetchSummary(true)}
                 disabled={loadingSummary}
                 className="flex items-center gap-1.5 transition-colors duration-150 cursor-pointer font-mono text-[13px]"
-                style={{ color: '#555' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#888')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = '#555')}
+                style={{ color: '#525252' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#1A1A1A')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#525252')}
               >
                 {loadingSummary ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -204,11 +204,11 @@ export default function SequenceSlideOut({
             </div>
             {loadingSummary ? (
               <div className="space-y-2">
-                <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-full" />
-                <div className="h-3 bg-[#1c1c1c] rounded animate-pulse w-3/4" />
+                <div className="h-3 bg-[#E5E5E5] rounded animate-pulse w-full" />
+                <div className="h-3 bg-[#E5E5E5] rounded animate-pulse w-3/4" />
               </div>
             ) : (
-              <p className="font-sans text-[17px] text-[#888] leading-relaxed">
+              <p className="font-sans text-[17px] text-[#525252] leading-relaxed">
                 {summary?.summary_text ?? 'No summary available.'}
               </p>
             )}
@@ -218,13 +218,13 @@ export default function SequenceSlideOut({
           {loadingDetail ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-[#1c1c1c] rounded-lg animate-pulse" />
+                <div key={i} className="h-16 bg-[#E5E5E5] rounded-lg animate-pulse" />
               ))}
             </div>
           ) : chartData.length > 0 ? (
             <div>
               <p
-                className="font-mono text-[11px] uppercase text-[#333] mb-3"
+                className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-3"
                 style={{ letterSpacing: '0.08em' }}
               >
                 Reply Rate by Step
@@ -233,26 +233,26 @@ export default function SequenceSlideOut({
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#555', fontSize: 13, fontFamily: 'Fira Sans' }}
-                    axisLine={{ stroke: '#1c1c1c' }}
+                    tick={{ fill: '#737373', fontSize: 13, fontFamily: "'Satoshi', sans-serif" }}
+                    axisLine={{ stroke: '#E5E5E5' }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: '#555', fontSize: 13, fontFamily: 'Fira Code' }}
-                    axisLine={{ stroke: '#1c1c1c' }}
+                    tick={{ fill: '#737373', fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}
+                    axisLine={{ stroke: '#E5E5E5' }}
                     tickLine={false}
                     unit="%"
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#0f0f0f',
-                      border: '1px solid #1c1c1c',
+                      backgroundColor: '#FFFFFF',
+                      border: '2px solid #1A1A1A',
                       borderRadius: '6px',
-                      fontFamily: 'Fira Sans',
+                      fontFamily: "'Satoshi', sans-serif",
                       fontSize: '15px',
                     }}
-                    labelStyle={{ color: '#aaa', fontFamily: 'Fira Code' }}
-                    itemStyle={{ color: '#555' }}
+                    labelStyle={{ color: '#737373', fontFamily: "'JetBrains Mono', monospace" }}
+                    itemStyle={{ color: '#737373' }}
                     formatter={(value, _name, props) => {
                       const p = props?.payload as { severity?: string; stepType?: string } | undefined
                       return [`${value}% (${p?.severity ?? ''})`, p?.stepType ?? '']
@@ -262,13 +262,13 @@ export default function SequenceSlideOut({
                     y={3.5}
                     stroke="#F59E0B"
                     strokeDasharray="4 4"
-                    label={{ value: 'Flag threshold', fill: '#F59E0B', fontSize: 13, fontFamily: 'Fira Code' }}
+                    label={{ value: 'Flag threshold', fill: '#F59E0B', fontSize: 13, fontFamily: "'JetBrains Mono', monospace" }}
                   />
                   <Bar dataKey="replyRate" radius={[4, 4, 0, 0]} isAnimationActive={true}>
                     {chartData.map((entry, index) => (
                       <Cell
                         key={index}
-                        fill={entry.severity === 'FLAGGED' ? '#f87171' : '#4ade80'}
+                        fill={entry.severity === 'FLAGGED' ? '#DC2626' : '#16A34A'}
                       />
                     ))}
                   </Bar>
@@ -281,7 +281,7 @@ export default function SequenceSlideOut({
           {!loadingDetail && detail?.steps && (
             <div className="space-y-2">
               <p
-                className="font-mono text-[11px] uppercase text-[#333] mb-2"
+                className="font-mono text-[11px] uppercase text-[#A3A3A3] mb-2"
                 style={{ letterSpacing: '0.08em' }}
               >
                 Steps
@@ -294,8 +294,8 @@ export default function SequenceSlideOut({
                     onClick={flagged ? () => setRewriteStepId(step.step_id) : undefined}
                     className={`group p-4 transition-all duration-150 ${flagged ? 'cursor-pointer' : ''}`}
                     style={{
-                      background: flagged ? '#0d0606' : 'transparent',
-                      borderLeft: flagged ? '2px solid #f87171' : '2px solid #1c1c1c',
+                      background: flagged ? '#FEE2E2' : 'transparent',
+                      borderLeft: flagged ? '2px solid #DC2626' : '2px solid #E5E5E5',
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -303,16 +303,16 @@ export default function SequenceSlideOut({
                         <span
                           className="font-mono text-[11px] rounded px-1.5 py-0.5"
                           style={{
-                            color: '#333',
-                            background: '#141414',
+                            color: '#A3A3A3',
+                            background: '#F5F5F5',
                           }}
                         >
                           {step.step_number}
                         </span>
-                        <span style={{ color: '#555' }}>
+                        <span style={{ color: '#737373' }}>
                           <StepIcon type={step.step_type} />
                         </span>
-                        <span className="font-sans text-[15px] text-[#888]">
+                        <span className="font-sans text-[15px] text-[#525252]">
                           {step.step_type}
                         </span>
                       </div>
@@ -321,9 +321,9 @@ export default function SequenceSlideOut({
                           <span
                             className="font-mono text-[11px] rounded px-1.5 py-0.5"
                             style={{
-                              background: '#141414',
-                              color: '#555',
-                              border: '1px solid #222',
+                              background: '#F5F5F5',
+                              color: '#737373',
+                              border: '1px solid #D4D4D4',
                             }}
                           >
                             {step.step_intent}
@@ -333,9 +333,9 @@ export default function SequenceSlideOut({
                           <span
                             className="font-mono text-[13px] rounded px-2 py-0.5"
                             style={{
-                              background: '#1a0505',
-                              color: '#f87171',
-                              border: '1px solid #331010',
+                              background: '#FEE2E2',
+                              color: '#DC2626',
+                              border: '1px solid #DC2626',
                             }}
                           >
                             FLAGGED
@@ -344,9 +344,9 @@ export default function SequenceSlideOut({
                           <span
                             className="font-mono text-[13px] rounded px-2 py-0.5"
                             style={{
-                              background: '#141414',
-                              color: '#555',
-                              border: '1px solid #222',
+                              background: '#F5F5F5',
+                              color: '#737373',
+                              border: '1px solid #D4D4D4',
                             }}
                           >
                             OK
@@ -355,26 +355,26 @@ export default function SequenceSlideOut({
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="font-mono text-[22px] text-[#e5e5e5]">
+                      <span className="font-mono text-[22px] text-[#1A1A1A]">
                         {fmt(step.reply_rate)}
                       </span>
-                      <span className="font-mono text-[13px] text-[#555]">
+                      <span className="font-mono text-[13px] text-[#737373]">
                         open {fmt(step.open_rate)}
                       </span>
-                      <span className="font-mono text-[13px] text-[#555]">
+                      <span className="font-mono text-[13px] text-[#737373]">
                         mtg {fmt(step.meeting_rate)}
                       </span>
-                      <span className="font-mono text-[13px] text-[#555]">
+                      <span className="font-mono text-[13px] text-[#737373]">
                         {step.send_volume} sends
                       </span>
                       {flagged && (
                         <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                          <ChevronRight size={14} style={{ color: '#555' }} />
+                          <ChevronRight size={14} style={{ color: '#737373' }} />
                         </span>
                       )}
                     </div>
                     {step.subject && (
-                      <p className="truncate font-sans text-[15px] italic text-[#444] mt-1">
+                      <p className="truncate font-sans text-[15px] italic text-[#737373] mt-1">
                         {step.subject}
                       </p>
                     )}

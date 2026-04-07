@@ -33,7 +33,7 @@ function IntentPill({ children }: { children: string }) {
   return (
     <span
       className="font-mono text-[10px] px-2 py-0.5 rounded"
-      style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+      style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}
     >
       {children}
     </span>
@@ -45,7 +45,7 @@ function StatusPill({ flagType }: { flagType: string }) {
     return (
       <span
         className="font-mono text-[10px] px-2 py-0.5 rounded"
-        style={{ background: '#1a0505', color: '#f87171', border: '1px solid #331010' }}
+        style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #DC2626' }}
       >
         flagged
       </span>
@@ -54,7 +54,7 @@ function StatusPill({ flagType }: { flagType: string }) {
   return (
     <span
       className="font-mono text-[10px] px-2 py-0.5 rounded"
-      style={{ background: '#141414', color: '#555', border: '1px solid #222' }}
+      style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}
     >
       ok
     </span>
@@ -110,14 +110,14 @@ export default function SequencePage({
     <div className="max-w-7xl mx-auto px-6 py-8">
       <button
         onClick={() => router.push('/')}
-        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#333] hover:text-[#888] transition-colors duration-150 cursor-pointer mb-6"
+        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#A3A3A3] hover:text-[#525252] transition-colors duration-150 cursor-pointer mb-6"
       >
         <ChevronLeft size={12} />
         All Sequences
       </button>
 
       <p
-        className="font-sans text-[13px] font-normal text-[#aaa] mb-6"
+        className="font-sans text-[13px] font-normal text-[#525252] mb-6"
         style={{ letterSpacing: '0.04em' }}
       >
         {sequenceName ?? id}
@@ -130,49 +130,49 @@ export default function SequencePage({
       {loading && (
         <div className="space-y-2">
           {['w-full', 'w-11/12', 'w-full', 'w-10/12', 'w-full'].map((w, i) => (
-            <div key={i} className={`h-10 bg-[#1c1c1c] rounded animate-pulse ${w}`} />
+            <div key={i} className={`h-10 bg-[#E5E5E5] rounded animate-pulse ${w}`} />
           ))}
         </div>
       )}
 
       {!loading && !error && steps.length === 0 && (
-        <p className="font-sans text-sm text-[#555] py-8 text-center">No steps found for this sequence.</p>
+        <p className="font-sans text-sm text-[#737373] py-8 text-center">No steps found for this sequence.</p>
       )}
 
       {!loading && !error && steps.length > 0 && (
-        <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
+        <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-[#0a0a0a] border-b border-[#1c1c1c] sticky top-0">
+              <tr className="bg-[#F5F5F5] border-b-2 border-[#1A1A1A] sticky top-0">
                 <th className="text-left px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Step</span>
-                </th>
-                <th className="text-left px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Type</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Step</span>
                 </th>
                 <th className="text-left px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Intent</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Type</span>
+                </th>
+                <th className="text-left px-4 py-3">
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Intent</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Sends</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Sends</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Opens</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Opens</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Clicks</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Clicks</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Replies</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Replies</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Open Rate</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Open Rate</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Reply Rate</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Reply Rate</span>
                 </th>
                 <th className="text-right px-4 py-3">
-                  <span className="font-mono text-[9px] uppercase text-[#333]" style={{ letterSpacing: '0.08em' }}>Status</span>
+                  <span className="font-mono text-[9px] uppercase text-[#A3A3A3]" style={{ letterSpacing: '0.08em' }}>Status</span>
                 </th>
               </tr>
             </thead>
@@ -181,41 +181,41 @@ export default function SequencePage({
                 <tr
                   key={step.step_id}
                   onClick={() => step.flag_type !== 'none' ? openDrawer(step.step_id) : undefined}
-                  className={`border-b border-b-[#1a1a1a] transition-colors duration-150 hover:bg-[#0f0f0f] ${
+                  className={`border-b border-b-[#E5E5E5] transition-colors duration-150 hover:bg-[#F5F5F5] ${
                     step.flag_type !== 'none'
-                      ? 'bg-[#0d0606] border-l-2 border-l-[#f87171] cursor-pointer'
+                      ? 'bg-[#FEE2E2] border-l-2 border-l-[#DC2626] cursor-pointer'
                       : ''
                   }`}
                 >
                   <td className="px-4 py-3.5">
-                    <span className="font-mono text-sm text-[#aaa]">{step.step_number}</span>
+                    <span className="font-mono text-sm text-[#525252]">{step.step_number}</span>
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className="font-sans text-xs text-[#555]">{step.step_type ?? '—'}</span>
+                    <span className="font-sans text-xs text-[#737373]">{step.step_type ?? '—'}</span>
                   </td>
                   <td className="px-4 py-3.5">
                     {step.step_intent
                       ? <IntentPill>{step.step_intent}</IntentPill>
-                      : <span className="font-sans text-xs text-[#555]">—</span>
+                      : <span className="font-sans text-xs text-[#737373]">—</span>
                     }
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{step.send_volume}</span>
+                    <span className="font-mono text-sm text-[#525252]">{step.send_volume}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{step.open_count}</span>
+                    <span className="font-mono text-sm text-[#525252]">{step.open_count}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{step.click_count}</span>
+                    <span className="font-mono text-sm text-[#525252]">{step.click_count}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{step.reply_count}</span>
+                    <span className="font-mono text-sm text-[#525252]">{step.reply_count}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="font-mono text-sm text-[#aaa]">{fmt(step.open_rate)}</span>
+                    <span className="font-mono text-sm text-[#525252]">{fmt(step.open_rate)}</span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className={`font-mono text-sm ${step.flag_type !== 'none' ? 'text-[#f87171]' : 'text-[#aaa]'}`}>
+                    <span className={`font-mono text-sm ${step.flag_type !== 'none' ? 'text-[#DC2626]' : 'text-[#525252]'}`}>
                       {fmt(step.reply_rate)}
                     </span>
                   </td>

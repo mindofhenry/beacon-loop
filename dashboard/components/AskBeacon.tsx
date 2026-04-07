@@ -231,8 +231,8 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
   return (
     <div
       style={{
-        background: isPanel ? '#0c0c0c' : 'transparent',
-        border: isPanel ? '1px solid #1c1c1c' : 'none',
+        background: isPanel ? '#FFFFFF' : 'transparent',
+        border: isPanel ? '2px solid #1A1A1A' : 'none',
         borderRadius: isPanel ? '10px' : '0',
         padding: isPanel ? '20px' : '0',
       }}
@@ -240,10 +240,10 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
       {/* Header */}
       {isPanel && (
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles size={16} style={{ color: '#3b82f6' }} />
+          <Sparkles size={16} style={{ color: '#2563EB' }} />
           <span
             className="font-mono text-[11px] uppercase"
-            style={{ letterSpacing: '0.08em', color: '#3a3a3a' }}
+            style={{ letterSpacing: '0.08em', color: '#737373' }}
           >
             Ask Beacon
           </span>
@@ -256,8 +256,8 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: '#101010',
-          border: '1px solid #252525',
+          background: '#FFFFFF',
+          border: '2px solid #1A1A1A',
           borderRadius: '8px',
           padding: '4px 4px 4px 14px',
         }}
@@ -275,7 +275,7 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
             background: 'transparent',
             border: 'none',
             outline: 'none',
-            color: '#e5e5e5',
+            color: '#1A1A1A',
             padding: '8px 0',
           }}
         />
@@ -290,8 +290,8 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
             height: '36px',
             borderRadius: '6px',
             border: 'none',
-            background: input.trim() && !isStreaming ? '#3b82f6' : '#1c1c1c',
-            color: input.trim() && !isStreaming ? '#fff' : '#555',
+            background: input.trim() && !isStreaming ? '#2563EB' : '#F5F5F5',
+            color: input.trim() && !isStreaming ? '#fff' : '#A3A3A3',
             cursor: input.trim() && !isStreaming ? 'pointer' : 'default',
             transition: 'background 150ms ease',
             flexShrink: 0,
@@ -320,20 +320,20 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
               style={{
                 padding: '6px 12px',
                 borderRadius: '16px',
-                border: '1px solid #252525',
-                background: '#111',
-                color: '#888',
+                border: '2px solid #D4D4D4',
+                background: '#FFFFFF',
+                color: '#525252',
                 cursor: isStreaming ? 'default' : 'pointer',
               }}
               onMouseEnter={(e) => {
                 if (!isStreaming) {
-                  e.currentTarget.style.borderColor = '#3b82f6'
-                  e.currentTarget.style.color = '#ccc'
+                  e.currentTarget.style.borderColor = '#2563EB'
+                  e.currentTarget.style.color = '#1A1A1A'
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#252525'
-                e.currentTarget.style.color = '#888'
+                e.currentTarget.style.borderColor = '#D4D4D4'
+                e.currentTarget.style.color = '#525252'
               }}
             >
               {prompt}
@@ -350,7 +350,7 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
             ref={responseRef}
             className="font-sans text-[15px]"
             style={{
-              color: '#ccc',
+              color: '#1A1A1A',
               lineHeight: 1.7,
               maxHeight: variant === 'modal' ? '260px' : '360px',
               overflowY: 'auto',
@@ -359,7 +359,7 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
             }}
           >
             {error ? (
-              <span style={{ color: '#f87171' }}>Error: {error}</span>
+              <span style={{ color: '#DC2626' }}>Error: {error}</span>
             ) : (
               responseText
             )}
@@ -369,7 +369,7 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
                   display: 'inline-block',
                   width: '6px',
                   height: '16px',
-                  background: '#3b82f6',
+                  background: '#2563EB',
                   marginLeft: '2px',
                   verticalAlign: 'text-bottom',
                   animation: 'blink 1s step-end infinite',
@@ -390,9 +390,9 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
                 style={{
                   padding: '5px 12px',
                   borderRadius: '6px',
-                  border: '1px solid #252525',
-                  background: '#111',
-                  color: copied ? '#22c55e' : '#888',
+                  border: '2px solid #1A1A1A',
+                  background: '#FFFFFF',
+                  color: copied ? '#16A34A' : '#525252',
                   cursor: 'pointer',
                 }}
               >
@@ -405,9 +405,9 @@ export default function AskBeacon({ page, dataContext, variant = 'panel' }: AskB
                 style={{
                   padding: '5px 12px',
                   borderRadius: '6px',
-                  border: '1px solid #252525',
-                  background: '#111',
-                  color: '#888',
+                  border: '2px solid #1A1A1A',
+                  background: '#FFFFFF',
+                  color: '#525252',
                   cursor: 'pointer',
                 }}
               >

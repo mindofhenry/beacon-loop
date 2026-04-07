@@ -61,16 +61,16 @@ function fmt(rate: number | null): string {
 }
 
 function healthColor(score: number): string {
-  if (score >= 70) return '#22c55e'
-  if (score >= 40) return '#f59e0b'
-  return '#f87171'
+  if (score >= 70) return '#16A34A'
+  if (score >= 40) return '#F59E0B'
+  return '#DC2626'
 }
 
 function severityColor(confidence: number | null): string {
-  if (confidence == null) return '#555'
-  if (confidence >= 0.8) return '#f87171'
-  if (confidence >= 0.5) return '#f59e0b'
-  return '#555'
+  if (confidence == null) return '#737373'
+  if (confidence >= 0.8) return '#DC2626'
+  if (confidence >= 0.5) return '#F59E0B'
+  return '#737373'
 }
 
 function severityLabel(confidence: number | null): 'high' | 'medium' | 'low' {
@@ -90,7 +90,7 @@ function SourcePill({ source }: { source: 'Outreach' | 'Salesloft' | 'Mixed' }) 
   if (source === 'Mixed') {
     return (
       <span className="font-mono text-[13px] px-2 py-0.5 rounded"
-        style={{ background: '#141414', color: '#555', border: '1px solid #222' }}>
+        style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}>
         OR/SL
       </span>
     )
@@ -99,8 +99,8 @@ function SourcePill({ source }: { source: 'Outreach' | 'Salesloft' | 'Mixed' }) 
   return (
     <span className="font-mono text-[13px] px-2 py-0.5 rounded"
       style={isOR
-        ? { background: '#0d1526', color: '#3b82f6', border: '1px solid #1a2d4a' }
-        : { background: '#141414', color: '#555', border: '1px solid #222' }
+        ? { background: '#DBEAFE', color: '#2563EB', border: '1px solid #2563EB' }
+        : { background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }
       }>
       {isOR ? 'OR' : 'SL'}
     </span>
@@ -111,7 +111,7 @@ function HealthBar({ score }: { score: number }) {
   const color = healthColor(score)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-      <div style={{ width: '72px', height: '4px', background: '#1c1c1c', borderRadius: '2px', overflow: 'hidden' }}>
+      <div style={{ width: '72px', height: '4px', background: '#E5E5E5', borderRadius: '2px', overflow: 'hidden' }}>
         <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: '2px', transition: 'width 300ms ease' }} />
       </div>
       <span className="font-mono text-[13px]" style={{ color, minWidth: '28px', textAlign: 'right' }}>
@@ -125,17 +125,18 @@ function KpiCard({ label, value, color }: { label: string; value: string; color?
   return (
     <div style={{
       padding: '16px 20px',
-      background: '#0f0f0f',
-      border: '1px solid #1c1c1c',
+      background: '#FFFFFF',
+      border: '2px solid #1A1A1A',
       borderRadius: '8px',
       flex: '1 1 0',
       minWidth: '140px',
+      boxShadow: '4px 4px 0px #1A1A1A',
     }}>
-      <div className="font-mono text-[11px] uppercase text-[#333]"
+      <div className="font-mono text-[11px] uppercase text-[#A3A3A3]"
         style={{ letterSpacing: '0.08em', marginBottom: '6px' }}>
         {label}
       </div>
-      <div className="font-mono text-[29px] font-semibold" style={{ color: color ?? '#e5e5e5' }}>
+      <div className="font-mono text-[29px] font-semibold" style={{ color: color ?? '#1A1A1A' }}>
         {value}
       </div>
     </div>
@@ -154,7 +155,7 @@ function SeverityDot({ confidence }: { confidence: number | null }) {
 function TypeIntentPill({ children }: { children: string }) {
   return (
     <span className="font-mono text-[13px] px-2 py-0.5 rounded"
-      style={{ background: '#141414', color: '#555', border: '1px solid #222' }}>
+      style={{ background: '#F5F5F5', color: '#737373', border: '1px solid #D4D4D4' }}>
       {children}
     </span>
   )
@@ -163,7 +164,7 @@ function TypeIntentPill({ children }: { children: string }) {
 function FlagPill({ type }: { type: string }) {
   return (
     <span className="font-mono text-[13px] px-2 py-0.5 rounded"
-      style={{ background: '#1a0505', color: '#f87171', border: '1px solid #331010' }}>
+      style={{ background: '#FEE2E2', color: '#DC2626', border: '1px solid #DC2626' }}>
       {type}
     </span>
   )
@@ -173,17 +174,17 @@ function FlaggedStepCard({ step, onClick }: { step: FlaggedStep; onClick: () => 
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer transition-colors duration-150 hover:bg-[#0f0f0f]"
+      className="cursor-pointer transition-colors duration-150 hover:bg-[#F5F5F5]"
       style={{
         display: 'flex', alignItems: 'center', gap: '12px',
-        padding: '12px 16px', borderBottom: '1px solid #1a1a1a',
+        padding: '12px 16px', borderBottom: '1px solid #E5E5E5',
       }}
     >
       <SeverityDot confidence={step.flag_confidence} />
 
-      <span className="font-sans text-[17px] text-[#aaa]" style={{ flex: '1 1 auto', minWidth: 0 }}>
+      <span className="font-sans text-[17px] text-[#525252]" style={{ flex: '1 1 auto', minWidth: 0 }}>
         {step.sequence_name ?? step.sequence_id}
-        <span className="text-[#555]"> — Step {step.step_number}</span>
+        <span className="text-[#737373]"> — Step {step.step_number}</span>
       </span>
 
       <span style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
@@ -192,7 +193,7 @@ function FlaggedStepCard({ step, onClick }: { step: FlaggedStep; onClick: () => 
       </span>
 
       <span className="font-mono text-[17px]"
-        style={{ color: '#f87171', flexShrink: 0, minWidth: '52px', textAlign: 'right' }}>
+        style={{ color: '#DC2626', flexShrink: 0, minWidth: '52px', textAlign: 'right' }}>
         {fmt(step.reply_rate)}
       </span>
 
@@ -203,12 +204,12 @@ function FlaggedStepCard({ step, onClick }: { step: FlaggedStep; onClick: () => 
 
 // ─── Pipeline Chart ──────────────────────────────────────────────────────────
 
-const BAR_COLORS = ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316']
+const BAR_COLORS = ['#2563EB', '#4F46E5', '#7C3AED', '#9333EA', '#C026D3', '#DB2777', '#DC2626', '#EA580C']
 
 function PipelineChart({ data }: { data: { name: string; value: number }[] }) {
   if (data.length === 0) {
     return (
-      <p className="font-sans text-[17px] text-[#555] py-4 text-center">
+      <p className="font-sans text-[17px] text-[#737373] py-4 text-center">
         No pipeline attribution data for this rep.
       </p>
     )
@@ -217,12 +218,12 @@ function PipelineChart({ data }: { data: { name: string; value: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={Math.max(120, data.length * 40 + 40)}>
       <BarChart data={data} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
-        <XAxis type="number" tick={{ fill: '#555', fontSize: 11, fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+        <XAxis type="number" tick={{ fill: '#737373', fontSize: 11, fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
         <YAxis type="category" dataKey="name" width={160}
-          tick={{ fill: '#aaa', fontSize: 13, fontFamily: 'sans-serif' }} axisLine={false} tickLine={false} />
+          tick={{ fill: '#525252', fontSize: 13, fontFamily: 'sans-serif' }} axisLine={false} tickLine={false} />
         <Tooltip
-          contentStyle={{ background: '#1c1c1c', border: '1px solid #333', borderRadius: '6px', color: '#e5e5e5', fontSize: '13px' }}
-          labelStyle={{ color: '#aaa' }}
+          contentStyle={{ background: '#FFFFFF', border: '2px solid #1A1A1A', borderRadius: '6px', color: '#1A1A1A', fontSize: '13px' }}
+          labelStyle={{ color: '#737373' }}
           formatter={(value) => [`${value} opps`, 'Pipeline']}
         />
         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
@@ -403,24 +404,24 @@ export default function RepDetailPage({
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
         <button onClick={() => router.push('/reps')}
-          className="inline-flex items-center gap-1.5 font-mono text-[13px] text-[#333] hover:text-[#888] transition-colors duration-150 cursor-pointer mb-6">
+          className="inline-flex items-center gap-1.5 font-mono text-[13px] text-[#A3A3A3] hover:text-[#525252] transition-colors duration-150 cursor-pointer mb-6">
           <ChevronLeft size={14} /> All Reps
         </button>
-        <p className="font-sans text-[17px] text-[#555] py-8 text-center">
+        <p className="font-sans text-[17px] text-[#737373] py-8 text-center">
           Rep not found.
         </p>
       </div>
     )
   }
 
-  const thStyle = "font-mono text-[9px] uppercase text-[#333]"
+  const thStyle = "font-mono text-[9px] uppercase text-[#A3A3A3]"
   const thLetterSpacing = { letterSpacing: '0.08em' } as const
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Back link */}
       <button onClick={() => router.push('/reps')}
-        className="inline-flex items-center gap-1.5 font-mono text-[13px] text-[#333] hover:text-[#888] transition-colors duration-150 cursor-pointer mb-6">
+        className="inline-flex items-center gap-1.5 font-mono text-[13px] text-[#A3A3A3] hover:text-[#525252] transition-colors duration-150 cursor-pointer mb-6">
         <ChevronLeft size={14} /> All Reps
       </button>
 
@@ -429,7 +430,7 @@ export default function RepDetailPage({
       {loading && (
         <div className="space-y-2">
           {['w-full', 'w-11/12', 'w-full', 'w-10/12', 'w-full'].map((w, i) => (
-            <div key={i} className={`h-12 bg-[#1c1c1c] rounded animate-pulse ${w}`} />
+            <div key={i} className={`h-12 bg-[#E5E5E5] rounded animate-pulse ${w}`} />
           ))}
         </div>
       )}
@@ -440,15 +441,15 @@ export default function RepDetailPage({
           {/* ── Rep Header ── */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <h1 className="font-sans text-[24px] font-semibold text-[#e5e5e5]">
+              <h1 className="font-sans text-[24px] font-semibold text-[#1A1A1A]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {rep.name}
               </h1>
               <SourcePill source={repSource} />
             </div>
             <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-              <span className="font-mono text-[13px] text-[#555]">{rep.team}</span>
-              <span className="font-mono text-[13px] text-[#333]">|</span>
-              <span className="font-mono text-[13px] text-[#555]">{rep.role.toUpperCase()}</span>
+              <span className="font-mono text-[13px] text-[#737373]">{rep.team}</span>
+              <span className="font-mono text-[13px] text-[#A3A3A3]">|</span>
+              <span className="font-mono text-[13px] text-[#737373]">{rep.role.toUpperCase()}</span>
             </div>
 
             {/* KPI cards */}
@@ -459,25 +460,25 @@ export default function RepDetailPage({
               <KpiCard
                 label="Flagged Steps"
                 value={String(kpis.flaggedCount)}
-                color={kpis.flaggedCount > 0 ? '#f87171' : '#e5e5e5'}
+                color={kpis.flaggedCount > 0 ? '#DC2626' : '#1A1A1A'}
               />
             </div>
           </div>
 
           {/* ── Sequence Portfolio ── */}
           <div>
-            <h2 className="font-sans text-[19px] font-semibold text-[#e5e5e5] mb-4">
+            <h2 className="font-sans text-[19px] font-semibold text-[#1A1A1A] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Sequence Portfolio
             </h2>
             {sequences.length === 0 ? (
-              <p className="font-sans text-[17px] text-[#555] py-4 text-center">
+              <p className="font-sans text-[17px] text-[#737373] py-4 text-center">
                 No sequences assigned to this rep.
               </p>
             ) : (
-              <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
+              <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-[#0a0a0a] border-b border-[#1c1c1c] sticky top-0">
+                    <tr className="bg-[#F5F5F5] border-b-2 border-[#1A1A1A] sticky top-0">
                       <th className="text-left px-4 py-3">
                         <span className={thStyle} style={thLetterSpacing}>Sequence</span>
                       </th>
@@ -499,10 +500,10 @@ export default function RepDetailPage({
                     {sequences.map((seq) => (
                       <tr key={seq.sequence_id}
                         onClick={() => router.push(`/sequences/${seq.sequence_id}`)}
-                        className="border-b border-b-[#1a1a1a] cursor-pointer transition-colors duration-150 hover:bg-[#0f0f0f]">
+                        className="border-b border-b-[#E5E5E5] cursor-pointer transition-colors duration-150 hover:bg-[#F5F5F5]">
                         <td className="px-4 py-3.5">
-                          <div className="font-sans text-[17px] text-[#aaa]">{seq.sequence_name}</div>
-                          <div className="font-mono text-[11px] text-[#333] mt-0.5" style={{ letterSpacing: '0.04em' }}>
+                          <div className="font-sans text-[17px] text-[#525252]">{seq.sequence_name}</div>
+                          <div className="font-mono text-[11px] text-[#A3A3A3] mt-0.5" style={{ letterSpacing: '0.04em' }}>
                             {seq.sequence_id}
                           </div>
                         </td>
@@ -510,16 +511,16 @@ export default function RepDetailPage({
                           <HealthBar score={seq.health} />
                         </td>
                         <td className="px-4 py-3.5 text-right">
-                          <span className="font-mono text-[17px] text-[#aaa]">{fmt(seq.avg_reply_rate)}</span>
+                          <span className="font-mono text-[17px] text-[#525252]">{fmt(seq.avg_reply_rate)}</span>
                         </td>
                         <td className="px-4 py-3.5 text-right">
                           <span className="font-mono text-[17px]"
-                            style={{ color: seq.flagged_count > 0 ? '#f87171' : '#555' }}>
+                            style={{ color: seq.flagged_count > 0 ? '#DC2626' : '#737373' }}>
                             {seq.flagged_count}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-right">
-                          <span className="font-mono text-[17px] text-[#aaa]">{seq.pipeline_influenced}</span>
+                          <span className="font-mono text-[17px] text-[#525252]">{seq.pipeline_influenced}</span>
                         </td>
                       </tr>
                     ))}
@@ -531,20 +532,20 @@ export default function RepDetailPage({
 
           {/* ── Flagged Steps ── */}
           <div>
-            <h2 className="font-sans text-[19px] font-semibold text-[#e5e5e5] mb-4">
+            <h2 className="font-sans text-[19px] font-semibold text-[#1A1A1A] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Flagged Steps
               {flaggedSteps.length > 0 && (
-                <span className="font-mono text-[13px] text-[#f87171] ml-3">
+                <span className="font-mono text-[13px] text-[#DC2626] ml-3">
                   {flaggedSteps.length}
                 </span>
               )}
             </h2>
             {flaggedSteps.length === 0 ? (
-              <p className="font-sans text-[17px] text-[#555] py-4 text-center">
+              <p className="font-sans text-[17px] text-[#737373] py-4 text-center">
                 No flagged steps for this rep.
               </p>
             ) : (
-              <div className="border border-[#1c1c1c] rounded-lg overflow-hidden">
+              <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden">
                 {flaggedSteps.map((step) => (
                   <FlaggedStepCard key={step.step_id} step={step} onClick={() => openDrawer(step.step_id)} />
                 ))}
@@ -554,11 +555,11 @@ export default function RepDetailPage({
 
           {/* ── Pipeline Breakdown ── */}
           <div>
-            <h2 className="font-sans text-[19px] font-semibold text-[#e5e5e5] mb-4">
+            <h2 className="font-sans text-[19px] font-semibold text-[#1A1A1A] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Pipeline Breakdown
             </h2>
-            <div className="border border-[#1c1c1c] rounded-lg overflow-hidden"
-              style={{ padding: '16px', background: '#0a0a0a' }}>
+            <div className="border-2 border-[#1A1A1A] rounded-lg overflow-hidden"
+              style={{ padding: '16px', background: '#FFFFFF' }}>
               <PipelineChart data={pipelineChartData} />
             </div>
           </div>
