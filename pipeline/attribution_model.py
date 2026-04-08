@@ -151,6 +151,7 @@ def _build_outreach_df() -> pd.DataFrame:
             "opened": attr.get("openCount", 0) > 0,
             "clicked": attr.get("clickCount", 0) > 0,
             "replied": attr.get("repliedAt") is not None,
+            "_rep_id": attr.get("_rep_id"),
         })
     return pd.DataFrame(rows)
 
@@ -424,6 +425,16 @@ def calculate_step_performance(
 
     group_cols = ["source", "sequence_id", "sequence_name", "step_id", "step_number", "step_type"]
 
+    # --- Map string rep IDs (e.g. "sdr_3") to integer rep IDs for the reps table ---
+    def _rep_id_to_int(raw: str | None) -> int | None:
+        if not raw or not isinstance(raw, str):
+            return None
+        # Extract trailing digits: "sdr_3" → 3, "ae_1" → would be 7+ but only SDRs in email data
+        parts = raw.split("_")
+        if len(parts) == 2 and parts[1].isdigit():
+            return int(parts[1])
+        return None
+
     # --- Pre-compute R1 (step-1 reply rate) per sequence ---
     r1_by_seq: dict[tuple, float] = {}
     for keys, grp in touchpoints_df.groupby(group_cols, dropna=False):
@@ -438,6 +449,18 @@ def calculate_step_performance(
     for keys, grp in touchpoints_df.groupby(group_cols, dropna=False):
         source, seq_id, seq_name, step_id, step_num, step_type = keys
         step_num = int(step_num)
+
+        # ---- Rep assignment (pick one rep per step deterministically) ----
+        rep_id_int = None
+        if "_rep_id" in grp.columns:
+            unique_reps = grp["_rep_id"].dropna().unique()
+            if len(unique_reps) == 1:
+                rep_id_int = _rep_id_to_int(unique_reps[0])
+            elif len(unique_reps) > 1:
+                # Multiple reps on same step — assign round-robin by step_number
+                sorted_reps = sorted([_rep_id_to_int(r) for r in unique_reps if _rep_id_to_int(r) is not None])
+                if sorted_reps:
+                    rep_id_int = sorted_reps[(step_num - 1) % len(sorted_reps)]
 
         # ---- Basic counts (unchanged) ----
         sv = len(grp)
@@ -598,6 +621,7 @@ def calculate_step_performance(
             "credible_interval_upper": ci_upper,
             "credible_interval_lower": ci_lower,
             "messaging_theme": (messaging_themes or {}).get(str(step_id)),
+            "rep_id": rep_id_int,
         })
 
     return pd.DataFrame(snapshots)

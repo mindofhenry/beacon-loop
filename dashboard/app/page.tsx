@@ -214,7 +214,7 @@ export default function OverviewPage() {
       }
     }
     const totalPipeline = Array.from(oppAmounts.values()).reduce((a, b) => a + b, 0)
-    const flaggedCount = steps.filter((s) => s.flag_type != null).length
+    const flaggedCount = steps.filter((s) => s.flag_type && s.flag_type !== 'none').length
 
     setKpis({
       activeSequences: sequenceIds.size,
@@ -226,7 +226,7 @@ export default function OverviewPage() {
     // ── Coaching Queue (Manager) ──
     const flaggedByRep = new Map<number, { steps: StepPerfRow[] }>()
     for (const s of steps) {
-      if (s.flag_type == null || s.rep_id == null) continue
+      if (!s.flag_type || s.flag_type === 'none' || s.rep_id == null) continue
       if (!flaggedByRep.has(s.rep_id)) flaggedByRep.set(s.rep_id, { steps: [] })
       flaggedByRep.get(s.rep_id)!.steps.push(s)
     }
@@ -296,7 +296,7 @@ export default function OverviewPage() {
     if (topRep) {
       setCurrentRepName(topRep.repName)
       const mySteps = steps
-        .filter((s) => s.flag_type != null && s.rep_id === topRep.repId)
+        .filter((s) => s.flag_type && s.flag_type !== 'none' && s.rep_id === topRep.repId)
         .sort((a, b) => (Number(a.reply_rate) || 0) - (Number(b.reply_rate) || 0))
         .map((s) => ({
           stepId: s.step_id,
@@ -312,7 +312,7 @@ export default function OverviewPage() {
     }
 
     // ── Store context for LLM panels ──
-    const flagged = steps.filter((s) => s.flag_type != null)
+    const flagged = steps.filter((s) => s.flag_type && s.flag_type !== 'none')
     const flaggedContext = flagged.map((s) => {
       const rep = s.rep_id ? repMap.get(s.rep_id) : null
       return `- ${s.sequence_name ?? s.sequence_id} Step ${s.step_number} (${s.step_type ?? 'email'}, ${s.step_intent ?? 'unknown'}): reply ${(Number(s.reply_rate) * 100).toFixed(1)}%, flag: ${s.flag_type}${s.flag_confidence ? ` (${(s.flag_confidence * 100).toFixed(0)}% confidence)` : ''}, theme: ${s.messaging_theme ?? 'none'}${rep ? `, rep: ${rep.name}` : ''}`
